@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta tags comuns -->
+</head>
+<body>
+<header th:fragment="header">
+    <div class="container">
+        <img src="/img/logo.png" alt="Acredite Se Quiser" class="logo" />
+        <nav>
+            <div class="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul>
+                <li><a th:href="@{/home}">Início</a></li>
+                <li><a th:href="@{/apoiadores}">Apoiadores</a></li>
+                <li><a th:href="@{/episodios}">Episódios</a></li>
+                <li><a th:href="@{/sobre}">Sobre</a></li>
+                <li><a th:href="@{/contato}">Fale Conosco</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+</body>
+</html>
