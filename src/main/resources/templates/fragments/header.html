@@ -4,14 +4,15 @@
 <body>
 <header th:fragment="header">
     <div class="logo">
-        <h1>Meu site</h1>
+        <h1></h1>
     </div>
     <nav>
         <ul>
             <li><a th:href="@{/}">Início</a></li>
             <li><a th:href="@{/episodios}">Episódios</a></li>
             <li sec:authorize="isAuthenticated()">
-                <a th:href="@{/logout}">Sair</a>
+                <form th:action="@{/logout}" method="post" id="logoutForm" style="display:none;"></form>
+                <a href="#" onclick="document.getElementById('logoutForm').submit(); return false;">Sair</a>
             </li>
             <li sec:authorize="isAnonymous()">
                 <a th:href="@{/login}">Entrar</a>
@@ -19,5 +20,6 @@
         </ul>
     </nav>
 </header>
+
 </body>
 </html>

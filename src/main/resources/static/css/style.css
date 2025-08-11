@@ -531,3 +531,107 @@ footer .container {
     color: #f0ad4e;
     margin-bottom: 0.5rem;
 }
+/* Só na página login-page */
+body.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #0D1B1E;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #D6C178;
+}
+
+/* Container específico */
+body.login-page .container {
+  background-color: #0A1517;
+  padding: 2rem 3rem;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.7);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Inputs e botão só na login-page */
+body.login-page input[type="email"],
+body.login-page input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #3C8F9E;
+  border-radius: 4px;
+  background-color: #0D1B1E;
+  color: #D6C178;
+  font-size: 1em;
+}
+
+body.login-page button.btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #3C8F9E;
+  border: none;
+  border-radius: 25px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: background-color 0.3s ease;
+}
+
+body.login-page button.btn:hover {
+  background-color: #317F8A;
+}
+body.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #0D1B1E;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #D6C178;
+}
+
+body.auth-page .container {
+  background-color: #0A1517;
+  padding: 2rem 3rem;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.7);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+body.auth-page input[type="email"],
+body.auth-page input[type="password"],
+body.auth-page input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #3C8F9E;
+  border-radius: 4px;
+  background-color: #0D1B1E;
+  color: #D6C178;
+  font-size: 1em;
+}
+
+body.auth-page button.btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #3C8F9E;
+  border: none;
+  border-radius: 25px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.1em;
+  transition: background-color 0.3s ease;
+}
+
+body.auth-page button.btn:hover {
+  background-color: #317F8A;
+}
