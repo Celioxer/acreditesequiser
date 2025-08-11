@@ -635,3 +635,9 @@ body.auth-page button.btn {
 body.auth-page button.btn:hover {
   background-color: #317F8A;
 }
+.alert-error {
+    background-color: #ffdddd;
+    border-left: 6px solid #f44336;
+    padding: 10px;
+    margin-bottom: 15px;
+}
