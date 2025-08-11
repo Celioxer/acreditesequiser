@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +21,34 @@
             <img th:src="@{/img/logo.png}" alt="Acredite Se Quiser" class="hero-logo" />
             <h1>Acredite Se Quiser</h1>
             <p>Explorando os mistérios do universo, UFOs, conspirações e além...</p>
+
+            <!-- Área de acesso para assinantes -->
+            <div class="access-area">
+                <div sec:authorize="isAnonymous()">
+                    <div class="subscribe-cta">
+                        <h2>Conteúdo Exclusivo para Assinantes</h2>
+                        <p>Tenha acesso completo a todos os episódios e conteúdos especiais</p>
+                        <div class="auth-buttons">
+                            <a th:href="@{/login}" class="btn btn-login">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                            <a th:href="@{/register}" class="btn btn-register">
+                                <i class="fas fa-user-plus"></i> Cadastre-se
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div sec:authorize="isAuthenticated()">
+                    <div class="welcome-back">
+                        <h2>Bem-vindo de volta, <span sec:authentication="name"></span>!</h2>
+                        <p>Acesse agora nosso conteúdo exclusivo</p>
+                        <a th:href="@{/episodios}" class="btn btn-episodes">
+                            <i class="fas fa-play"></i> Acessar Episódios
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 </main>
@@ -28,6 +57,6 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <!-- JS -->
-<script src="/static/js/script.js" defer></script>
+<script th:src="@{/js/script.js}" defer></script>
 </body>
 </html>

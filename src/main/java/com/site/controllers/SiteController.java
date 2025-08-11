@@ -8,12 +8,12 @@ public class SiteController {
 
     @GetMapping({"/", "/home"})
     public String home() {
-        return "home";
+        return "home"; // Página inicial acessível a todos
     }
 
     @GetMapping("/episodios")
     public String episodios() {
-        return "episodios";
+        return "episodios"; // Apenas para usuários autenticados
     }
 
     @GetMapping("/sobre")
