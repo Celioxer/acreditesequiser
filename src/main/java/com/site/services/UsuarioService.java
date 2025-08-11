@@ -13,7 +13,9 @@ public class UsuarioService {
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+
     }
+
 
     public Usuario registrarUsuario(Usuario usuario) {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
@@ -22,4 +24,5 @@ public class UsuarioService {
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         return usuarioRepository.save(usuario);
     }
+
 }

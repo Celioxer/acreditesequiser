@@ -31,24 +31,24 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(
-            @Valid Usuario usuario,
-            BindingResult result,
-            @RequestParam("confirmPassword") String confirmPassword,
-            Model model) {
-
+    public String registerUser(@Valid Usuario usuario, BindingResult result, Model model, @RequestParam("confirmPassword") String confirmPassword) {
         if (result.hasErrors()) {
             return "auth/register";
         }
-
         if (!usuario.getSenha().equals(confirmPassword)) {
             model.addAttribute("error", "As senhas não coincidem.");
             return "auth/register";
         }
-
-        usuarioService.registrarUsuario(usuario);
+        try {
+            usuarioService.registrarUsuario(usuario);
+        } catch (Exception e) {
+            // Aqui você pode verificar o tipo da exceção para mensagens específicas
+            model.addAttribute("error", "Email já cadastrado.");
+            return "auth/register";
+        }
         return "redirect:/login?registroSucesso";
     }
+
 
     @ExceptionHandler(Exception.class)
     public String handleError(Model model, Exception ex) {
