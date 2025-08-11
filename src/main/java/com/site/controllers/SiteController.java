@@ -6,10 +6,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class SiteController {
 
-    @GetMapping("/home")
+    @GetMapping({"/", "/home"})
     public String home() {
-        return "home.html"; // o Spring procura por home.html em /templates
+        return "home";
     }
+
     @GetMapping("/episodios")
     public String episodios() {
         return "episodios";
@@ -17,15 +18,15 @@ public class SiteController {
 
     @GetMapping("/sobre")
     public String sobre() {
-        return "sobre.html";
+        return "sobre";
     }
 
     @GetMapping("/contato")
     public String contato() {
-        return "contato.html";
+        return "contato";
     }
     @GetMapping("/apoiadores")
     public String apoiadores() {
-        return "apoiadores.html";
+        return "apoiadores";
     }
 }

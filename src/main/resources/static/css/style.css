@@ -8,12 +8,16 @@ html, body {
   width: 100%;
   overflow-x: hidden; /* Isso previne a barra de rolagem horizontal */
 }
+
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte segura */
   background-color: #0D1B1E;
   color: #D6C178;
 }
+
+/* ... restante do seu CSS original, sem alterações */
+
 
 header {
   background-color: #0A1517;
