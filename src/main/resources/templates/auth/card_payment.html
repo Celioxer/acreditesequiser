@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Pagamento com Cartão</title>
+    <!-- Inclua o SDK do Mercado Pago para gerar o token de forma segura -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        form div {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            color: #333;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #009ee3;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #0087c0;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="auth-page">
+
+<div class="container">
+    <h2>Pagamento com Cartão</h2>
+
+    <form id="form-checkout">
+        <!-- Campos escondidos para enviar os dados do plano -->
+        <input type="hidden" name="plan" th:value="${plan}">
+        <input type="hidden" name="paymentMethod" value="card">
+
+        <!-- Campos do Mercado Pago que o JS irá preencher com o token -->
+        <input type="hidden" id="token" name="token">
+
+        <div class="form-group">
+            <label for="cardNumber">Número do Cartão</label>
+            <input type="text" id="cardNumber" data-checkout="cardNumber" required>
+        </div>
+
+        <div class="form-group">
+            <label for="cardholderName">Nome no Cartão</label>
+            <input type="text" id="cardholderName" data-checkout="cardholderName" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cardExpirationMonth">Mês de Expiração</label>
+                <input type="text" id="cardExpirationMonth" data-checkout="cardExpirationMonth" placeholder="MM" required>
+            </div>
+            <div class="form-group">
+                <label for="cardExpirationYear">Ano de Expiração</label>
+                <input type="text" id="cardExpirationYear" data-checkout="cardExpirationYear" placeholder="AAAA" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="securityCode">Código de Segurança (CVV)</label>
+            <input type="text" id="securityCode" data-checkout="securityCode" required>
+        </div>
+
+        <button type="submit">Pagar</button>
+    </form>
+</div>
+
+<script th:inline="javascript">
+    // Inicialize o SDK com sua chave pública de teste
+    // Lembre-se de substituir 'SUA_PUBLIC_KEY_DE_TESTE'
+    const mp = new MercadoPago('SUA_PUBLIC_KEY_DE_TESTE', {
+        locale: 'pt-BR'
+    });
+
+    // Crie o formulário de checkout
+    const cardForm = mp.cardForm({
+        amount: [[${valor}]],
+        iframe: true,
+        form: {
+            id: "form-checkout",
+            cardNumber: { id: "cardNumber", placeholder: "Número do Cartão" },
+            cardholderName: { id: "cardholderName", placeholder: "Nome impresso no cartão" },
+            cardExpirationMonth: { id: "cardExpirationMonth", placeholder: "MM" },
+            cardExpirationYear: { id: "cardExpirationYear", placeholder: "AAAA" },
+            securityCode: { id: "securityCode", placeholder: "CVV" },
+        },
+        callbacks: {
+            onFormMounted: error => {
+                if (error) return console.warn("Form Mounted Handling Error: ", error);
+                console.log("Form Mounted");
+            },
+            onSubmit: event => {
+                event.preventDefault();
+
+                // Tokeniza os dados do cartão
+                mp.createCardToken({
+                    cardNumber: document.getElementById("cardNumber").value,
+                    cardholderName: document.getElementById("cardholderName").value,
+                    cardExpirationMonth: document.getElementById("cardExpirationMonth").value,
+                    cardExpirationYear: document.getElementById("cardExpirationYear").value,
+                    securityCode: document.getElementById("securityCode").value,
+                }).then(response => {
+                    // Envie o token para o seu backend
+                    fetch("/process-card-payment", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            token: response.id,
+                            plan: document.querySelector('input[name="plan"]').value,
+                            paymentMethod: document.querySelector('input[name="paymentMethod"]').value
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        window.location.href = data.redirectUrl;
+                    });
+                }).catch(error => {
+                    // Lide com o erro
+                    console.error("Erro ao tokenizar o cartão: ", error);
+                });
+            }
+        }
+    });
+
+</script>
+</body>
+</html>
