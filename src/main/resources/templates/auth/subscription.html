@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Escolha seu Plano</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .plan-card {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="auth-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container">
+    <h2>Escolha seu Plano de Assinatura</h2>
+
+    <div th:if="${error}" class="alert alert-error">
+        <p th:text="${error}"></p>
+    </div>
+
+    <div style="display: flex; justify-content: space-around;">
+        <div class="plan-card">
+            <h3>Plano Básico</h3>
+            <p>Acesso por 30 dias</p>
+            <p>R$ 30,00</p>
+            <a th:href="@{/checkout?plan=basic}" class="btn">Assinar</a>
+        </div>
+
+        <div class="plan-card">
+            <h3>Plano Premium</h3>
+            <p>Acesso por 30 dias + Conteúdo Exclusivo</p>
+            <p>R$ 60,00</p>
+            <a th:href="@{/checkout?plan=premium}" class="btn">Assinar</a>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
