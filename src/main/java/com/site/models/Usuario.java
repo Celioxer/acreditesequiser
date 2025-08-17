@@ -3,12 +3,13 @@ package com.site.models;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
 @Entity
 @Table(name = "usuarios")
-
 public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,10 +23,14 @@ public class Usuario implements UserDetails {
 
     @Column(nullable = true)
     private String senha;
+
     @Column(nullable = true)
     private String telefone;
 
-    // UserDetails methods
+    @Column(name = "acesso_valido_ate")
+    private LocalDateTime acessoValidoAte; // Novo campo para controlar o acesso
+
+    // Métodos UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
@@ -58,7 +63,8 @@ public class Usuario implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // A conta está habilitada somente se a data de validade for no futuro ou agora.
+        return acessoValidoAte != null && acessoValidoAte.isAfter(LocalDateTime.now());
     }
 
     // Getters e Setters
@@ -72,4 +78,6 @@ public class Usuario implements UserDetails {
     public String getTelefone() { return telefone;}
     public void setTelefone(String telefone) {this.telefone = telefone;}
 
+    public LocalDateTime getAcessoValidoAte() { return acessoValidoAte; }
+    public void setAcessoValidoAte(LocalDateTime acessoValidoAte) { this.acessoValidoAte = acessoValidoAte; }
 }
