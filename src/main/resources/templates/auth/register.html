@@ -36,6 +36,11 @@
             <input type="password" name="confirmPassword" required minlength="6">
         </div>
 
+        <div class="form-group">
+            <label>Telefone:</label>
+            <input type="tel" th:field="*{telefone}" placeholder="(00) 00000-0000">
+        </div>
+
         <button type="submit" class="btn">Cadastrar</button>
     </form>
 
@@ -44,6 +49,6 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
-<script th:src="@{/js/auth.js}"></script>
+<script th:src="@{/js/register.js}"></script>
 </body>
 </html>

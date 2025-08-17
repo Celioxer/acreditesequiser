@@ -641,3 +641,12 @@ body.auth-page button.btn:hover {
     padding: 10px;
     margin-bottom: 15px;
 }
+/* Adicione este código ao final do seu arquivo style.css */
+
+.alert-success {
+    background-color: #d4edda; /* Cor de fundo verde-claro */
+    border-left: 6px solid #28a745; /* Linha lateral verde */
+    color: #155724; /* Cor do texto verde-escuro */
+    padding: 10px;
+    margin-bottom: 15px;
+}

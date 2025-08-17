@@ -1,39 +1,38 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Login</title>
-  <link rel="stylesheet" th:href="@{/css/style.css?v=1.7}">
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css?v=1.8}">
 </head>
-<body class="login-page">
-
+<body class="auth-page">
 <div th:replace="~{fragments/header :: header}"></div>
 
 <div class="container">
-  <h2>Login</h2>
+    <h2>Login</h2>
 
-  <div th:if="${param.error}" class="alert alert-error">
-    Email ou senha inválidos
-  </div>
-
-  <div th:if="${param.registroSucesso}" class="alert alert-success">
-    Registro realizado com sucesso! Faça login.
-  </div>
-
-  <form th:action="@{/login}" method="post">
-    <div class="form-group">
-      <label>Email:</label>
-      <input type="email" name="username" required>
+    <div th:if="${success}" style="background-color: lightgreen; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+        <p th:text="${success}" style="color: green; font-weight: bold;"></p>
     </div>
 
-    <div class="form-group">
-      <label>Senha:</label>
-      <input type="password" name="password" required>
-    </div>
+    <form th:action="@{/login}" method="post">
+    </form>
+</div>
 
-    <button type="submit" class="btn">Entrar</button>
-  </form>
+    <form th:action="@{/login}" method="post">
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="username" required>
+        </div>
 
-  <p>Ainda não tem conta? <a th:href="@{/register}">Cadastre-se</a></p>
+        <div class="form-group">
+            <label>Senha:</label>
+            <input type="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn">Entrar</button>
+    </form>
+
+    <p class="auth-link">Não tem uma conta? <a th:href="@{/register}">Cadastre-se</a></p>
 </div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

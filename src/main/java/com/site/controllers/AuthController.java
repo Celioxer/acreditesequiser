@@ -6,53 +6,65 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class AuthController {
-    private final UsuarioService usuarioService;
 
+    private final UsuarioService usuarioService;
+    // Removido o campo 'mercadoPagoService'
+
+    // O construtor agora só precisa do UsuarioService
     public AuthController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 
     @GetMapping("/login")
-    public String showLoginForm() {
+    public String showLoginForm(Model model) {
         return "auth/login";
     }
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
-        model.addAttribute("usuario", new Usuario());
+        if (!model.containsAttribute("usuario")) {
+            model.addAttribute("usuario", new Usuario());
+        }
         return "auth/register";
     }
 
     @PostMapping("/register")
-    public String registerUser(@Valid Usuario usuario, BindingResult result, Model model, @RequestParam("confirmPassword") String confirmPassword) {
-        if (result.hasErrors()) {
-            return "auth/register";
-        }
+    public String registerUser(
+            @Valid @ModelAttribute("usuario") Usuario usuario,
+            BindingResult result,
+            @RequestParam("confirmPassword") String confirmPassword,
+            RedirectAttributes redirectAttributes) {
+
+        // 1. Validação de Senha no Controller
         if (!usuario.getSenha().equals(confirmPassword)) {
-            model.addAttribute("error", "As senhas não coincidem.");
-            return "auth/register";
+            redirectAttributes.addFlashAttribute("error", "As senhas não coincidem.");
+            redirectAttributes.addFlashAttribute("usuario", usuario);
+            return "redirect:/register";
         }
+
+        // 2. Validação de Erros de Formulário (Ex: campos vazios)
+        if (result.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Erro de validação. Verifique os campos.");
+            redirectAttributes.addFlashAttribute("usuario", usuario);
+            return "redirect:/register";
+        }
+
+        // 3. Chamada ao Serviço para Registrar
         try {
             usuarioService.registrarUsuario(usuario);
-        } catch (Exception e) {
-            // Aqui você pode verificar o tipo da exceção para mensagens específicas
-            model.addAttribute("error", "Email já cadastrado.");
-            return "auth/register";
+            redirectAttributes.addFlashAttribute("success", "Cadastro realizado com sucesso! Faça login para continuar.");
+            return "redirect:/login";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("usuario", usuario);
+            return "redirect:/register";
         }
-        return "redirect:/login?registroSucesso";
     }
 
-
-    @ExceptionHandler(Exception.class)
-    public String handleError(Model model, Exception ex) {
-        model.addAttribute("error", ex.getMessage());
-        return "error";
-    }
+    // Removido o método @PostMapping("/login") e toda a sua lógica de pagamento
 }

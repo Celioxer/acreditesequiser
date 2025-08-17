@@ -14,14 +14,16 @@ public class Usuario implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String nome;
 
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String senha;
+    @Column(nullable = true)
+    private String telefone;
 
     // UserDetails methods
     @Override
@@ -67,5 +69,7 @@ public class Usuario implements UserDetails {
     public void setEmail(String email) { this.email = email; }
     public String getSenha() { return senha; }
     public void setSenha(String senha) { this.senha = senha; }
+    public String getTelefone() { return telefone;}
+    public void setTelefone(String telefone) {this.telefone = telefone;}
 
 }
