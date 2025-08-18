@@ -4,6 +4,7 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.site.services.MercadoPagoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Collections;
 
 @Controller
 public class SubscriptionController {
@@ -47,7 +49,6 @@ public class SubscriptionController {
             RedirectAttributes redirectAttributes,
             Model model) {
 
-        // Simule os dados do usuário autenticado
         // Em um cenário real, você obteria esses dados do banco de dados
         String username = authentication.getName();
         String email = "usuario@teste.com";
@@ -80,8 +81,6 @@ public class SubscriptionController {
                 return "redirect:/subscription";
             }
         } else if ("card".equals(paymentMethod)) {
-            // Se o método for cartão, passe os dados para a página do formulário
-            // É crucial passar o 'plan' também para que o frontend o inclua na requisição POST
             model.addAttribute("valor", valor);
             model.addAttribute("descricao", descricao);
             model.addAttribute("plan", plan);
@@ -96,12 +95,11 @@ public class SubscriptionController {
      * NOVO MÉTODO: Lida com a requisição POST do formulário de cartão.
      */
     @PostMapping("/process-card-payment")
-    public String processCardPayment(
+    public ResponseEntity<?> processCardPayment(
             @RequestBody Map<String, String> payload,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
-        // Obtenha os dados do payload JSON
         String token = payload.get("token");
         String plan = payload.get("plan");
 
@@ -122,21 +120,16 @@ public class SubscriptionController {
         }
 
         try {
-            // Este método precisa ser implementado no MercadoPagoService
-            // Ele irá criar um pagamento com o token do cartão
             Payment payment = mercadoPagoService.createCardPayment(token, email, nome, cpf, descricao, valor);
 
-            // Verifique o status do pagamento
             if ("approved".equals(payment.getStatus())) {
-                return "redirect:/payment_success";
+                // Em vez de redirecionar, retorne um JSON com a URL de sucesso
+                return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/payment_success"));
             } else {
-                redirectAttributes.addFlashAttribute("error", "Pagamento não aprovado. Status: " + payment.getStatus());
-                return "redirect:/subscription";
+                return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/subscription"));
             }
-
         } catch (MPException | MPApiException e) {
-            redirectAttributes.addFlashAttribute("error", "Erro ao processar pagamento: " + e.getMessage());
-            return "redirect:/subscription";
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro ao processar pagamento: " + e.getMessage()));
         }
     }
 }

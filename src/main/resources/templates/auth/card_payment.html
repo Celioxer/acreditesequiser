@@ -165,13 +165,35 @@
                             paymentMethod: document.querySelector('input[name="paymentMethod"]').value
                         })
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        window.location.href = data.redirectUrl;
+                    .then(res => {
+                        // Verifique se a resposta é um redirecionamento
+                        if (res.redirected) {
+                            window.location.href = res.url;
+                        } else {
+                            // Se não for um redirecionamento, lide com a resposta JSON
+                            return res.json().then(data => {
+                                // Redirecione com base na URL recebida no JSON
+                                if (data.redirectUrl) {
+                                    window.location.href = data.redirectUrl;
+                                } else {
+                                    // Se não houver URL de redirecionamento, exiba um erro
+                                    console.error("Erro na resposta do servidor: URL de redirecionamento ausente");
+                                    alert("Ocorreu um erro no pagamento.");
+                                }
+                            }).catch(error => {
+                                console.error("Erro ao processar resposta JSON: ", error);
+                                alert("Ocorreu um erro ao processar o pagamento.");
+                            });
+                        }
+                    }).catch(error => {
+                        // Lide com erros de rede ou de resposta do servidor
+                        console.error("Erro na requisição: ", error);
+                        alert("Ocorreu um erro ao processar o pagamento.");
                     });
                 }).catch(error => {
-                    // Lide com o erro
+                    // Lide com o erro de tokenização do cartão
                     console.error("Erro ao tokenizar o cartão: ", error);
+                    alert("Ocorreu um erro ao processar seu cartão.");
                 });
             }
         }
