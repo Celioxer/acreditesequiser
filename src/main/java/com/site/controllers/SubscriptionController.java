@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Controller
 public class SubscriptionController {
@@ -38,6 +39,7 @@ public class SubscriptionController {
      */
     @GetMapping("/subscription")
     public String showSubscriptionPage() {
+        // A lógica de verificação de acesso foi movida para o CustomAuthenticationSuccessHandler.
         return "auth/subscription";
     }
 
@@ -131,25 +133,57 @@ public class SubscriptionController {
         if (Objects.equals(plan, "basic")) {
             valor = new BigDecimal("10.00");
             descricao = "Plano Básico - 30 dias de acesso";
-            planoDuracaoDias = 30; // Define a duração do plano
+            planoDuracaoDias = 30;
         } else { // Plano "premium"
             valor = new BigDecimal("30.00");
             descricao = "Plano Premium - 30 dias + Conteúdo Exclusivo";
-            planoDuracaoDias = 30; // Define a duração do plano
+            planoDuracaoDias = 30;
         }
 
         try {
             Payment payment = mercadoPagoService.createCardPayment(token, email, nome, cpf, descricao, valor);
 
             if ("approved".equals(payment.getStatus())) {
-                // CHAMA O SERVIÇO PARA ATUALIZAR O STATUS DA ASSINATURA NO BANCO DE DADOS
                 usuarioService.updateSubscriptionStatus(email, planoDuracaoDias);
-                return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/payment_success"));
+                return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/episodios"));
             } else {
                 return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/subscription"));
             }
         } catch (MPException | MPApiException e) {
             return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro ao processar pagamento: " + e.getMessage()));
         }
+    }
+
+    /**
+     * Lida com o acesso a conteúdo protegido com restrições.
+     * Permite que usuários com assinatura ativa acessem a página.
+     */
+    @GetMapping("/conteudo-protegido")
+    public String getProtectedContent(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
+        String username = authentication.getName();
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
+
+        if (!optionalUsuario.isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
+            return "redirect:/subscription";
+        }
+
+        Usuario usuario = optionalUsuario.get();
+
+        if ((usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now()))) {
+            model.addAttribute("mensagem", "Bem-vindo! Você tem acesso ao conteúdo protegido.");
+            return "protected-content-page";
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Assinatura necessária para acessar este conteúdo.");
+            return "redirect:/subscription";
+        }
+    }
+
+    /**
+     * Rota para a página de episódios. A verificação de acesso é feita pelo Security.
+     */
+    @GetMapping("/episodios")
+    public String showEpisodesPage() {
+        return "episodios";
     }
 }

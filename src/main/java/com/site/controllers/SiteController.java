@@ -11,11 +11,6 @@ public class SiteController {
         return "home"; // Página inicial acessível a todos
     }
 
-    @GetMapping("/episodios")
-    public String episodios() {
-        return "episodios"; // Apenas para usuários autenticados
-    }
-
     @GetMapping("/sobre")
     public String sobre() {
         return "sobre";
@@ -25,6 +20,7 @@ public class SiteController {
     public String contato() {
         return "contato";
     }
+
     @GetMapping("/apoiadores")
     public String apoiadores() {
         return "apoiadores";

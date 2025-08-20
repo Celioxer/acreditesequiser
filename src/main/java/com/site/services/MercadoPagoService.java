@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 @Service
 public class MercadoPagoService {
 
-    @Value("${mercadopago.access.token}")
-    private String accessToken;
+    private final String accessToken;
 
     public MercadoPagoService(@Value("${mercadopago.access.token}") String accessToken) {
         this.accessToken = accessToken;
@@ -87,5 +86,18 @@ public class MercadoPagoService {
 
         // Cria o pagamento na API do Mercado Pago
         return client.create(createRequest);
+    }
+
+    /**
+     * NOVO MÉTODO: Obtém um pagamento do Mercado Pago pelo seu ID.
+     * Este método é crucial para o webhook.
+     * @param paymentId O ID do pagamento a ser buscado.
+     * @return O objeto Payment com os detalhes do pagamento.
+     * @throws MPException Em caso de erro de conexão ou configuração.
+     * @throws MPApiException Em caso de erro na API do Mercado Pago.
+     */
+    public Payment getPayment(String paymentId) throws MPException, MPApiException {
+        PaymentClient client = new PaymentClient();
+        return client.get(Long.parseLong(paymentId));
     }
 }

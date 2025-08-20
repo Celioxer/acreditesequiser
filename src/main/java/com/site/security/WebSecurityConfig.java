@@ -15,7 +15,6 @@ public class WebSecurityConfig {
 
     private final AuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
-    // Injeta o CustomAuthenticationSuccessHandler no construtor
     public WebSecurityConfig(AuthenticationSuccessHandler customAuthenticationSuccessHandler) {
         this.customAuthenticationSuccessHandler = customAuthenticationSuccessHandler;
     }
@@ -24,12 +23,17 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // Permite acesso a páginas públicas
                         .requestMatchers("/", "/home", "/register/**", "/login", "/css/**", "/js/**", "/img/**").permitAll()
+                        // Permite acesso público ao endpoint de webhook
+                        .requestMatchers("/api/mercadopago/webhook").permitAll()
+                        // Permite acesso a paginas de conteudos para usuarios logados
+                        .requestMatchers("/episodios", "/conteudo-protegido", "/subscription", "/checkout", "/process-card-payment").authenticated()
+                        // Todas as outras rotas devem ser autenticadas
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        // Usa o customAuthenticationSuccessHandler para personalizar o redirecionamento
                         .successHandler(customAuthenticationSuccessHandler)
                         .permitAll()
                 )
