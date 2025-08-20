@@ -4,8 +4,8 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.site.services.MercadoPagoService;
-import com.site.models.Usuario; // O modelo de usuário agora é "Usuario"
-import com.site.services.UsuarioService; // O serviço de usuário agora é "UsuarioService"
+import com.site.models.Usuario;
+import com.site.services.UsuarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class SubscriptionController {
 
     private final MercadoPagoService mercadoPagoService;
-    private final UsuarioService usuarioService; // Injeção de dependência do serviço de usuário
+    private final UsuarioService usuarioService;
 
     public SubscriptionController(MercadoPagoService mercadoPagoService, UsuarioService usuarioService) {
         this.mercadoPagoService = mercadoPagoService;
@@ -34,8 +34,7 @@ public class SubscriptionController {
     }
 
     /**
-     * Exibe a página de seleção de planos. Este é o destino
-     * inicial após o login.
+     * Exibe a página de seleção de planos.
      */
     @GetMapping("/subscription")
     public String showSubscriptionPage() {
@@ -44,7 +43,6 @@ public class SubscriptionController {
 
     /**
      * Processa a seleção do plano e método de pagamento.
-     * Este método é chamado a partir dos botões na página /subscription.
      */
     @GetMapping("/checkout")
     public String checkout(
@@ -54,9 +52,6 @@ public class SubscriptionController {
             RedirectAttributes redirectAttributes,
             Model model) {
 
-        // --- ALTERAÇÃO PRINCIPAL PARA PRODUÇÃO ---
-        // Obtenha os dados do usuário do banco de dados de forma dinâmica e segura.
-        // O `authentication.getName()` geralmente retorna o username/email do usuário logado.
         String username = authentication.getName();
         Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
 
@@ -68,16 +63,16 @@ public class SubscriptionController {
         Usuario usuario = optionalUsuario.get();
         String email = usuario.getEmail();
         String nome = usuario.getNome();
-        String cpf = usuario.getCpf(); // Supondo que o CPF está no modelo de usuário
+        String cpf = usuario.getCpf();
 
         BigDecimal valor;
         String descricao;
 
         if (Objects.equals(plan, "basic")) {
-            valor = new BigDecimal("30.00");
+            valor = new BigDecimal("10.00");
             descricao = "Plano Básico - 30 dias de acesso";
         } else if (Objects.equals(plan, "premium")) {
-            valor = new BigDecimal("60.00");
+            valor = new BigDecimal("30.00");
             descricao = "Plano Premium - 30 dias + Conteúdo Exclusivo";
         } else {
             redirectAttributes.addFlashAttribute("error", "Plano de assinatura inválido.");
@@ -86,8 +81,6 @@ public class SubscriptionController {
 
         if ("pix".equals(paymentMethod)) {
             try {
-                // Agora, o método `createPixPayment` usará as credenciais de produção
-                // e os dados do usuário real.
                 Payment payment = mercadoPagoService.createPixPayment(
                         email, nome, cpf, descricao, valor
                 );
@@ -109,7 +102,7 @@ public class SubscriptionController {
     }
 
     /**
-     * NOVO MÉTODO: Lida com a requisição POST do formulário de cartão.
+     * Lida com a requisição POST do formulário de cartão.
      */
     @PostMapping("/process-card-payment")
     public ResponseEntity<?> processCardPayment(
@@ -119,7 +112,6 @@ public class SubscriptionController {
         String token = payload.get("token");
         String plan = payload.get("plan");
 
-        // Obtenha os dados do usuário do banco de dados de forma dinâmica e segura.
         String username = authentication.getName();
         Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
 
@@ -134,22 +126,24 @@ public class SubscriptionController {
 
         BigDecimal valor;
         String descricao;
+        int planoDuracaoDias;
 
         if (Objects.equals(plan, "basic")) {
-            valor = new BigDecimal("30.00");
+            valor = new BigDecimal("10.00");
             descricao = "Plano Básico - 30 dias de acesso";
-        } else {
-            valor = new BigDecimal("60.00");
+            planoDuracaoDias = 30; // Define a duração do plano
+        } else { // Plano "premium"
+            valor = new BigDecimal("30.00");
             descricao = "Plano Premium - 30 dias + Conteúdo Exclusivo";
+            planoDuracaoDias = 30; // Define a duração do plano
         }
 
         try {
-            // O método `createCardPayment` usará as credenciais de produção
-            // e os dados do usuário real.
             Payment payment = mercadoPagoService.createCardPayment(token, email, nome, cpf, descricao, valor);
 
             if ("approved".equals(payment.getStatus())) {
-                // Em vez de redirecionar, retorne um JSON com a URL de sucesso
+                // CHAMA O SERVIÇO PARA ATUALIZAR O STATUS DA ASSINATURA NO BANCO DE DADOS
+                usuarioService.updateSubscriptionStatus(email, planoDuracaoDias);
                 return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/payment_success"));
             } else {
                 return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/subscription"));
@@ -157,7 +151,5 @@ public class SubscriptionController {
         } catch (MPException | MPApiException e) {
             return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro ao processar pagamento: " + e.getMessage()));
         }
-
     }
-
 }
