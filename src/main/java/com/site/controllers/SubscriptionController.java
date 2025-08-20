@@ -4,6 +4,8 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.site.services.MercadoPagoService;
+import com.site.models.Usuario; // O modelo de usuário agora é "Usuario"
+import com.site.services.UsuarioService; // O serviço de usuário agora é "UsuarioService"
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,17 +17,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Collections;
+import java.util.Optional;
 
 @Controller
 public class SubscriptionController {
 
     private final MercadoPagoService mercadoPagoService;
+    private final UsuarioService usuarioService; // Injeção de dependência do serviço de usuário
 
-    public SubscriptionController(MercadoPagoService mercadoPagoService) {
+    public SubscriptionController(MercadoPagoService mercadoPagoService, UsuarioService usuarioService) {
         this.mercadoPagoService = mercadoPagoService;
+        this.usuarioService = usuarioService;
     }
 
     /**
@@ -49,11 +54,21 @@ public class SubscriptionController {
             RedirectAttributes redirectAttributes,
             Model model) {
 
-        // Em um cenário real, você obteria esses dados do banco de dados
+        // --- ALTERAÇÃO PRINCIPAL PARA PRODUÇÃO ---
+        // Obtenha os dados do usuário do banco de dados de forma dinâmica e segura.
+        // O `authentication.getName()` geralmente retorna o username/email do usuário logado.
         String username = authentication.getName();
-        String email = "usuario@teste.com";
-        String nome = "Usuário Teste";
-        String cpf = "12345678909";
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
+
+        if (!optionalUsuario.isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
+            return "redirect:/subscription";
+        }
+
+        Usuario usuario = optionalUsuario.get();
+        String email = usuario.getEmail();
+        String nome = usuario.getNome();
+        String cpf = usuario.getCpf(); // Supondo que o CPF está no modelo de usuário
 
         BigDecimal valor;
         String descricao;
@@ -71,6 +86,8 @@ public class SubscriptionController {
 
         if ("pix".equals(paymentMethod)) {
             try {
+                // Agora, o método `createPixPayment` usará as credenciais de produção
+                // e os dados do usuário real.
                 Payment payment = mercadoPagoService.createPixPayment(
                         email, nome, cpf, descricao, valor
                 );
@@ -97,16 +114,23 @@ public class SubscriptionController {
     @PostMapping("/process-card-payment")
     public ResponseEntity<?> processCardPayment(
             @RequestBody Map<String, String> payload,
-            Authentication authentication,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication) {
 
         String token = payload.get("token");
         String plan = payload.get("plan");
 
-        // Simule os dados do usuário autenticado (deve ser obtido do `authentication.getName()`)
-        String email = "usuario@teste.com";
-        String nome = "Usuário Teste";
-        String cpf = "12345678909";
+        // Obtenha os dados do usuário do banco de dados de forma dinâmica e segura.
+        String username = authentication.getName();
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
+
+        if (!optionalUsuario.isPresent()) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro: Usuário não encontrado."));
+        }
+
+        Usuario usuario = optionalUsuario.get();
+        String email = usuario.getEmail();
+        String nome = usuario.getNome();
+        String cpf = usuario.getCpf();
 
         BigDecimal valor;
         String descricao;
@@ -120,6 +144,8 @@ public class SubscriptionController {
         }
 
         try {
+            // O método `createCardPayment` usará as credenciais de produção
+            // e os dados do usuário real.
             Payment payment = mercadoPagoService.createCardPayment(token, email, nome, cpf, descricao, valor);
 
             if ("approved".equals(payment.getStatus())) {
@@ -131,5 +157,7 @@ public class SubscriptionController {
         } catch (MPException | MPApiException e) {
             return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro ao processar pagamento: " + e.getMessage()));
         }
+
     }
+
 }

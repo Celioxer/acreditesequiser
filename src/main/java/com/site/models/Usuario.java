@@ -27,6 +27,10 @@ public class Usuario implements UserDetails {
     @Column(nullable = true)
     private String telefone;
 
+    // Campo CPF adicionado para que o código de pagamento funcione
+    @Column(nullable = true)
+    private String cpf;
+
     @Column(name = "acesso_valido_ate")
     private LocalDateTime acessoValidoAte; // Novo campo para controlar o acesso
 
@@ -80,4 +84,8 @@ public class Usuario implements UserDetails {
 
     public LocalDateTime getAcessoValidoAte() { return acessoValidoAte; }
     public void setAcessoValidoAte(LocalDateTime acessoValidoAte) { this.acessoValidoAte = acessoValidoAte; }
+
+    // Getters e Setters para o novo campo CPF
+    public String getCpf() { return cpf; }
+    public void setCpf(String cpf) { this.cpf = cpf; }
 }
