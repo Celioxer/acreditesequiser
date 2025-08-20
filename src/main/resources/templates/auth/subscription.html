@@ -106,25 +106,36 @@
     </div>
 
     <div class="plan-card-container">
-        <!-- Plano Básico -->
+        <!-- Plano Básico - Valor fixo de R$ 10 -->
         <div class="plan-card">
             <h3>Plano Básico</h3>
             <div class="price">R$ 10,00<small>/mês</small></div>
-            <p>Acesso completo por 30 dias.</p>
+            <p>Acredite se quiser, mas vou dar uma força!</p>
+            <p>
+                - Episódios exclusivos <br>
+                - Grupo secreto no WhatsApp
+            </p>
             <div class="btn-group">
-                <a th:href="@{/checkout(plan='basic', paymentMethod='pix')}" class="btn btn-pix">Pagar com Pix</a>
-                <a th:href="@{/checkout(plan='basic', paymentMethod='card')}" class="btn btn-card">Pagar com Cartão</a>
+                <a th:href="@{/checkout(plan='basic', paymentMethod='pix', valor='10.00')}" class="btn btn-pix">Pagar com Pix</a>
             </div>
         </div>
 
-        <!-- Plano Premium -->
+        <!-- Plano de Colaboração - Valor a partir de R$ 10 -->
         <div class="plan-card">
-            <h3>Plano Premium</h3>
-            <div class="price">R$ 10,00<small>/mês</small></div>
-            <p>Acesso por 30 dias + Conteúdo Exclusivo.</p>
+            <h3>Plano de Colaboração</h3>
+            <div class="price">R$ 10 ou mais</div>
+            <p>To acreditando mais ainda !!!</p>
+            <p>
+                - Episódios exclusivos <br>
+                - Grupo secreto no WhatsApp
+            </p>
             <div class="btn-group">
-                <a th:href="@{/checkout(plan='premium', paymentMethod='pix')}" class="btn btn-pix">Pagar com Pix</a>
-                <a th:href="@{/checkout(plan='premium', paymentMethod='card')}" class="btn btn-card">Pagar com Cartão</a>
+                <form id="colaboracaoForm" action="/checkout" method="get">
+                    <input type="hidden" name="plan" value="premium"/>
+                    <input type="hidden" name="paymentMethod" value="pix"/>
+                    <input type="number" id="valor" name="valor" step="0.01" min="10.00" placeholder="Digite o valor" required/>
+                    <button type="submit" class="btn btn-pix">Pagar com Pix</button>
+                </form>
             </div>
         </div>
     </div>

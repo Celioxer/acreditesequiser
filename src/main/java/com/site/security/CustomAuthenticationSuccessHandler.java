@@ -23,7 +23,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
     // Lista de e-mails que podem acessar sem precisar pagar.
     private static final List<String> ACESSO_LIBERADO = Arrays.asList(
             "celioxer@gmail.com",
-            "dono@exemplo.com"
+            "phcarvalho76@gmail.com"
     ).stream().map(String::toLowerCase).collect(Collectors.toList());
 
     private final UsuarioService usuarioService;
