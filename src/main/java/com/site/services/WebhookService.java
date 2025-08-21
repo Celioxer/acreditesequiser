@@ -5,6 +5,8 @@ import com.mercadopago.exceptions.MPException;
 import com.mercadopago.exceptions.MPApiException;
 import com.site.models.Usuario;
 import com.site.repositories.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,12 +16,18 @@ import java.util.Optional;
 @Service
 public class WebhookService {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
+
     private final UsuarioRepository usuarioRepository;
     private final MercadoPagoService mercadoPagoService;
+    private final PaymentHistoryService paymentHistoryService; // tabela auxiliar para evitar duplicação
 
-    public WebhookService(UsuarioRepository usuarioRepository, MercadoPagoService mercadoPagoService) {
+    public WebhookService(UsuarioRepository usuarioRepository,
+                          MercadoPagoService mercadoPagoService,
+                          PaymentHistoryService paymentHistoryService) {
         this.usuarioRepository = usuarioRepository;
         this.mercadoPagoService = mercadoPagoService;
+        this.paymentHistoryService = paymentHistoryService;
     }
 
     /**
@@ -29,18 +37,26 @@ public class WebhookService {
     @Transactional
     public void processPaymentNotification(String paymentId) {
         try {
-            // Obtém os detalhes completos do pagamento usando o ID.
+            // Evita processar a mesma notificação duas vezes
+            if (paymentHistoryService.existsByPaymentId(paymentId)) {
+                logger.info("Pagamento {} já processado, ignorando...", paymentId);
+                return;
+            }
+
+            // Obtém os detalhes completos do pagamento
             Payment payment = mercadoPagoService.getPayment(paymentId);
 
-            // Verifique se o pagamento foi aprovado.
-            if (payment != null && "approved".equals(payment.getStatus())) {
-                String emailDoUsuario = payment.getPayer().getEmail();
-                int planoDuracaoDias = 30; // Você pode obter isso do seu plano
+            if (payment != null && "approved".equalsIgnoreCase(payment.getStatus())) {
 
-                Optional<Usuario> optionalUsuario = usuarioRepository.findByEmail(emailDoUsuario);
+                // Pegamos o usuário pela external_reference, não pelo e-mail
+                String userIdRef = payment.getExternalReference();
+
+                Optional<Usuario> optionalUsuario = usuarioRepository.findById(Long.valueOf(userIdRef));
 
                 if (optionalUsuario.isPresent()) {
                     Usuario usuario = optionalUsuario.get();
+                    int planoDuracaoDias = 30;
+
                     LocalDateTime currentValidDate = usuario.getAcessoValidoAte();
                     LocalDateTime newValidDate;
 
@@ -52,11 +68,22 @@ public class WebhookService {
 
                     usuario.setAcessoValidoAte(newValidDate);
                     usuarioRepository.save(usuario);
+
+                    paymentHistoryService.savePayment(paymentId, usuario.getId()); // marca como processado
+
+                    logger.info("Pagamento {} aprovado. Usuário {} atualizado até {}",
+                            paymentId, usuario.getEmail(), newValidDate);
+                } else {
+                    logger.warn("Usuário não encontrado para external_reference {}", userIdRef);
                 }
+            } else {
+                logger.info("Pagamento {} recebido mas status: {}",
+                        paymentId, payment != null ? payment.getStatus() : "NULO");
             }
         } catch (MPException | MPApiException e) {
-            // Lida com erros de API do Mercado Pago
-            System.err.println("Erro ao processar notificação de pagamento: " + e.getMessage());
+            logger.error("Erro ao processar notificação de pagamento {}: {}", paymentId, e.getMessage());
+        } catch (Exception e) {
+            logger.error("Erro inesperado ao processar notificação {}: {}", paymentId, e.getMessage(), e);
         }
     }
 }
