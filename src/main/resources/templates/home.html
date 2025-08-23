@@ -1,63 +1,105 @@
 <!DOCTYPE html>
+
 <html xmlns:th="http://www.thymeleaf.org"
+
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Acredite Se Quiser</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/style.css?v=1.7}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<body>
 
-<!-- Header -->
+
+    <!-- CSS -->
+
+    <link rel="stylesheet" th:href="@{/css/style.css?v=1.8}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<body xmlns:th="http://www.w3.org/1999/xhtml">
+
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main>
     <section class="hero">
         <div class="hero-content">
             <img src="https://pub-9083d14195514a9f89133574d545efc9.r2.dev/PNG/ASQ_LOGO_PRINCIPAL.png" alt="Acredite Se Quiser" class="hero-logo" />
+            <h1>Bem-vindo ao Acredite Se Quiser</h1>
+            <p>Sua fonte definitiva para explorar os mistérios do universo, UFOs, conspirações e o inexplicável.</p>
+            <a href="#sobre" class="btn">Saiba Mais</a>
+        </div>
+    </section>
 
-            <h1>Acredite Se Quiser</h1>
-            <p>Explorando os mistérios do universo, UFOs, conspirações e além...</p>
+    <section id="sobre" class="page-section">
+        <div class="container">
+            <h2>O Que Você Encontrará Aqui?</h2>
+            <p class="section-description">
+                Navegue por um acervo de episódios exclusivos, artigos detalhados e discussões aprofundadas sobre os temas mais intrigantes que desafiam a nossa realidade. Nosso conteúdo é preparado para curiosos e céticos, sempre buscando a verdade por trás dos maiores enigmas.
+            </p>
+        </div>
+    </section>
 
-            <!-- Área de acesso para assinantes -->
-            <div class="access-area">
-                <div sec:authorize="isAnonymous()">
-                    <div class="subscribe-cta">
-                        <h2>Conteúdo Exclusivo para Assinantes</h2>
-                        <p>Tenha acesso completo a todos os episódios e conteúdos especiais</p>
-                        <div class="auth-buttons">
-                            <a th:href="@{/login}" class="btn btn-login">
-                                <i class="fas fa-sign-in-alt"></i> Login
-                            </a>
-                            <a th:href="@{/register}" class="btn btn-register">
-                                <i class="fas fa-user-plus"></i> Cadastre-se
-                            </a>
-                        </div>
+    <section id="destaques" class="page-section featured-episodes">
+        <div class="container">
+            <h2>Episódios em Destaque</h2>
+
+            <div class="episode-grid">
+
+                <div class="episode-card">
+                    <img src="https://placehold.co/400x250/1d2a2d/BE93FD?text=Episódio+1" alt="O Mistério de Roswell">
+                    <div class="card-content">
+                        <h3>O Mistério de Roswell</h3>
+                        <p>Uma análise profunda sobre o que realmente aconteceu no deserto do Novo México em 1947.</p>
+                        <span class="exclusive-tag">Exclusivo para Assinantes</span>
                     </div>
                 </div>
 
-                <div sec:authorize="isAuthenticated()">
-                    <div class="welcome-back">
-                        <h2>Bem-vindo de volta, <span sec:authentication="name"></span>!</h2>
-                        <p>Acesse agora nosso conteúdo exclusivo</p>
-                        <a th:href="@{/episodios}" class="btn btn-episodes">
-                            <i class="fas fa-play"></i> Acessar Episódios
-                        </a>
+                <div class="episode-card">
+                    <img src="https://placehold.co/400x250/1d2a2d/BE93FD?text=Episódio+2" alt="Operação Prato">
+                    <div class="card-content">
+                        <h3>Operação Prato</h3>
+                        <p>Os documentos oficiais e os relatos de testemunhas sobre os OVNIs na Amazônia brasileira.</p>
+                        <span class="exclusive-tag">Exclusivo para Assinantes</span>
+                    </div>
+                </div>
+
+                <div class="episode-card">
+                    <img src="https://placehold.co/400x250/1d2a2d/BE93FD?text=Episódio+3" alt="A Conspiração da Área 51">
+                    <div class="card-content">
+                        <h3>A Conspiração da Área 51</h3>
+                        <p>Separando os fatos da ficção sobre a base militar mais secreta do mundo.</p>
+                        <span class="exclusive-tag">Exclusivo para Assinantes</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <section id="cta" class="page-section cta-section">
+        <div class="container">
+            <h2>Tenha Acesso Completo</h2>
+            <p class="section-description">
+                Junte-se à nossa comunidade de exploradores e tenha acesso ilimitado a todos os episódios, conteúdos extras e materiais de pesquisa.
+            </p>
+            <div class="auth-buttons">
+                <a th:href="@{/register}" class="btn btn-register">
+                    <i class="fas fa-user-plus"></i> Cadastre-se Agora
+                </a>
+                <a th:href="@{/login}" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Já sou membro
+                </a>
+            </div>
+        </div>
+    </section>
+
 </main>
 
-<!-- Footer -->
 <div th:replace="~{fragments/footer :: footer}"></div>
 
-<!-- JS -->
 <script th:src="@{/js/script.js}" defer></script>
 </body>
-</html>

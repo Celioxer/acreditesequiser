@@ -1,44 +1,61 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Selecione seu Plano</title>
-    <!-- ... Seus links de CSS e fontes -->
+    <title>Selecione seu Plano - Acredite Se Quiser</title>
+    <link rel="stylesheet" th:href="@{/css/style.css?v=2.0}"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
-<div class="container">
-    <h2>Selecione o seu plano</h2>
+<div th:replace="~{fragments/header :: header}"></div>
 
-    <div th:if="${error}" class="alert alert-danger" role="alert">
-        <p th:text="${error}"></p>
-    </div>
+<main>
+    <section class="plans-section">
+        <div class="container">
+            <h2>Abra as Portas do Mistério</h2>
+            <p class="section-subtitle">Escolha o plano que mais combina com seu nível de curiosidade e junte-se à nossa comunidade de exploradores.</p>
 
-    <!-- Este bloco é a chave: obtém o email do usuário logado -->
-    <th:block th:with="userEmail=${#authentication.principal.username}">
-        <div class="plan-card-container">
-            <!-- Plano Básico -->
-            <div class="plan-card">
-                <h3>Plano Básico</h3>
-                <div class="price">R$ 10,00<small>/mês</small></div>
-                <p>Acesso completo por 30 dias.</p>
-                <div class="btn-group">
-                    <!-- Os botões agora redirecionam para a nova rota de assinatura -->
-                    <a th:href="@{/assinatura/criar(plan='basic', email=${userEmail})}" class="btn btn-pix">Assinar</a>
-                </div>
+            <div th:if="${error}" class="alert alert-danger" role="alert">
+                <p th:text="${error}"></p>
             </div>
 
-            <!-- Plano Premium -->
-            <div class="plan-card">
-                <h3>Plano Premium</h3>
-                <div class="price">R$ 10,00<small>/mês</small></div>
-                <p>Acesso por 30 dias + Conteúdo Exclusivo.</p>
-                <div class="btn-group">
-                    <a th:href="@{/assinatura/criar(plan='premium', email=${userEmail})}" class="btn btn-pix">Assinar</a>
+            <th:block th:with="userEmail=${#authentication.principal.username}">
+                <div class="plan-card-container">
+
+                    <div class="plan-card">
+                        <h3>Plano Explorador</h3>
+                        <div class="price">R$ 10,00<small>/mês</small></div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Acesso total ao acervo com centenas de episódios.</li>
+                            <li><i class="fas fa-check"></i> Ouça online ou faça download para levar com você.</li>
+                            <li><i class="fas fa-check"></i> Experiência livre de anúncios de terceiros.</li>
+                        </ul>
+                        <div class="btn-container">
+                            <a th:href="@{/assinatura/criar(plan='basic', email=${userEmail})}" class="btn btn-plan">Quero este plano</a>
+                        </div>
+                    </div>
+
+                    <div class="plan-card featured">
+                        <div class="featured-badge">Mais Popular</div>
+                        <h3>Plano Investigador</h3>
+                        <div class="price">R$ 15,00<small>/mês</small></div>
+                        <ul class="plan-features">
+                            <li><i class="fas fa-star"></i> <strong>Todos os benefícios</strong> do Plano Explorador.</li>
+                            <li><i class="fas fa-user-secret"></i> <strong>Episódios Secretos</strong> e conteúdo exclusivo.</li>
+                            <li><i class="fas fa-file-alt"></i> <strong>Dossiês e Análises</strong> aprofundadas dos casos.</li>
+                            <li><i class="fas fa-forward"></i> Acesso antecipado a novos lançamentos.</li>
+                        </ul>
+                        <div class="btn-container">
+                            <a th:href="@{/assinatura/criar(plan='premium', email=${userEmail})}" class="btn btn-plan">Quero este plano</a>
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+            </th:block>
         </div>
-    </th:block>
-</div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
 
 </body>
 </html>
