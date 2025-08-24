@@ -1,37 +1,37 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Episódios - Acredite Se Quiser</title>
-
-    <!-- CSS -->
-    <link rel="stylesheet" th:href="@{/css/style.css?v=1.7}">
-
-</head>
+<head th:replace="~{fragments/head :: common_head('Episódios')}"></head>
 <body>
 
 <!-- Header -->
 <div th:replace="~{fragments/header :: header}"></div>
 
 <main class="episodios-container">
-    <h1>Todos os Episódios</h1>
 
-    <!-- Barra de busca -->
     <div class="filtro-container">
+        <h1>Nossos Episódios</h1>
         <input type="text" id="busca-episodio" placeholder="Buscar por número ou título...">
-        <div id="contador-episodios">Mostrando 0 de 0 episódios</div>
+        <div id="contador-episodios"></div>
     </div>
 
-    <!-- Lista de episódios -->
-    <div class="episodios-grid" id="lista-episodios"></div>
+    <section class="secao-episodios">
+        <h2><i class="fas fa-star"></i> Conteúdo Exclusivo para Assinantes</h2>
+        <div class="episodios-grid" id="grid-exclusivos">
+        </div>
+    </section>
 
-    <!-- Paginação -->
+    <section class="secao-episodios">
+        <h2><i class="fas fa-headphones-alt"></i> Episódios Públicos Recentes</h2>
+        <div class="episodios-grid" id="grid-publicos">
+        </div>
+    </section>
+
     <div class="paginacao">
         <button id="anterior" disabled>Anterior</button>
         <span id="info-pagina">Página 1</span>
         <button id="proximo">Próxima</button>
     </div>
+
 </main>
 
 <!-- Footer -->
@@ -39,5 +39,6 @@
 
 <!-- JS -->
 <script th:src="@{/js/episodios.js}"></script>
+<script th:src="@{/js/script.js}" defer></script>
 </body>
 </html>

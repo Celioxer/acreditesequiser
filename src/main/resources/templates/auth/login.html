@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Login</title>
-    <link rel="stylesheet" th:href="@{/css/style.css?v=1.8}">
-</head>
+<head th:replace="~{fragments/head :: common_head('Login')}"></head>
 <body class="auth-page sticky-footer-layout">
 
 <div th:replace="~{fragments/header :: header}"></div>
@@ -39,6 +36,6 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
-
+<script th:src="@{/js/script.js}" defer></script>
 </body>
 </html>

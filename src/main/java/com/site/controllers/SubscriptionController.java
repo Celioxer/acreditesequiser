@@ -83,8 +83,10 @@ public class SubscriptionController {
 
         if ("pix".equals(paymentMethod)) {
             try {
+                // AQUI ESTÁ A CORREÇÃO:
+                // Passamos o objeto 'usuario' inteiro, a descrição e o valor.
                 Payment payment = mercadoPagoService.createPixPayment(
-                        email, nome, cpf, descricao, valor
+                        usuario, descricao, valor // <-- 3 argumentos corretos
                 );
                 String pixUrl = payment.getPointOfInteraction().getTransactionData().getTicketUrl();
                 return "redirect:" + pixUrl;
@@ -92,6 +94,7 @@ public class SubscriptionController {
                 redirectAttributes.addFlashAttribute("error", "Erro ao criar pagamento Pix: " + e.getMessage());
                 return "redirect:/subscription";
             }
+
         } else if ("card".equals(paymentMethod)) {
             model.addAttribute("valor", valor);
             model.addAttribute("descricao", descricao);

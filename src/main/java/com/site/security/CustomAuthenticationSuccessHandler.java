@@ -45,13 +45,14 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         Usuario usuario = optionalUsuario.get();
 
         // Verifica se o usuário tem acesso liberado OU se a assinatura está válida.
-        // A lógica de verificação foi simplificada para garantir o redirecionamento.
         boolean isAcessoLiberado = ACESSO_LIBERADO.contains(username);
         boolean isAssinaturaValida = usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now());
 
         if (isAcessoLiberado || isAssinaturaValida) {
-            response.sendRedirect("/episodios");
+            // A ÚNICA MUDANÇA É AQUI:
+            response.sendRedirect("/apoiadores"); // Redireciona para a nova página de boas-vindas
         } else {
+            // Esta lógica continua igual: se não tiver acesso, vai para a página de assinatura
             response.sendRedirect("/subscription");
         }
     }

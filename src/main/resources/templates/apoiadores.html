@@ -1,20 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apoiadores</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{fragments/head :: common_head('Bem-vindo, Apoiador!')}"></head>
+
 <body>
-<!-- Inclui o header -->
-<div th:replace="~{fragments/header :: header}"></div>
+<div class="sticky-footer-layout">
 
+    <div th:replace="~{fragments/header :: header}"></div>
 
+    <main class="welcome-page-container">
+        <div class="welcome-card">
 
+            <div sec:authorize="isAuthenticated()">
+                <h1 class="welcome-greeting">
+                    Obrigado pelo seu apoio, <span th:text="${#authentication.principal.username}">Usuário</span>!
+                </h1>
+            </div>
 
-<!-- Inclui o footer -->
-<div th:replace="~{fragments/footer :: footer}"></div>
+            <p class="welcome-subtitle">
+                Sua contribuição é fundamental para continuarmos nossa exploração dos maiores mistérios do universo. Agora, você faz parte do círculo interno de investigadores.
+            </p>
 
-<script src="/js/script.js"></script>
+            <hr class="welcome-divider">
+
+            <div class="welcome-cta">
+                <h2><i class="fab fa-whatsapp"></i> Acesso ao Grupo Secreto</h2>
+                <p>Conecte-se com outros apoiadores, discuta teorias e receba novidades em primeira mão no nosso grupo exclusivo para membros.</p>
+                <a href="https://chat.whatsapp.com/JnF3abEIx336wmD4M9s7Jy" target="_blank" class="btn btn-whatsapp">Entrar no Grupo</a>
+            </div>
+
+            <div class="welcome-cta">
+                <h2><i class="fas fa-play-circle"></i> Explore os Arquivos</h2>
+                <p>Todo o nosso acervo de episódios, incluindo o conteúdo exclusivo para assinantes, está liberado para você. Comece sua maratona agora mesmo.</p>
+                <a th:href="@{/episodios}" class="btn btn-episodios">Acessar Episódios</a>
+            </div>
+
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<script th:src="@{/js/script.js}" defer></script>
+</body>
+</html>

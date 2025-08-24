@@ -106,4 +106,5 @@ public class MercadoPagoService {
     public Payment getPayment(String paymentId) throws MPException, MPApiException {
         return paymentClient.get(Long.valueOf(paymentId));
     }
+
 }

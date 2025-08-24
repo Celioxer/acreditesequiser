@@ -28,7 +28,7 @@ public class WebSecurityConfig {
                         // Permite acesso público ao endpoint de webhook
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
                         // Permite acesso a paginas de conteudos para usuarios logados
-                        .requestMatchers("/episodios", "/conteudo-protegido", "/subscription", "/checkout", "/process-card-payment").authenticated()
+                        .requestMatchers("/apoiadores", "/episodios", "/conteudo-protegido", "/subscription", "/checkout", "/process-card-payment").authenticated() // << ADICIONADO AQUI
                         // Todas as outras rotas devem ser autenticadas
                         .anyRequest().authenticated()
                 )
