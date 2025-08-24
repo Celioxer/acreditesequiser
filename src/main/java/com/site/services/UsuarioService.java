@@ -1,6 +1,5 @@
 package com.site.services;
 
-import com.site.models.EmailLiberado;
 import com.site.models.Usuario;
 import com.site.repositories.EmailLiberadoRepository;
 import com.site.repositories.UsuarioRepository;
@@ -14,7 +13,7 @@ import java.util.Optional;
 @Service
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
-    private final EmailLiberadoRepository emailLiberadoRepository; // Injeta o novo repositório
+    private final EmailLiberadoRepository emailLiberadoRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UsuarioService(UsuarioRepository usuarioRepository, EmailLiberadoRepository emailLiberadoRepository, PasswordEncoder passwordEncoder) {
@@ -29,6 +28,11 @@ public class UsuarioService {
             throw new RuntimeException("Email já cadastrado");
         }
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+
+        // <<< MUDANÇA AQUI: Define o papel padrão para novos usuários
+        // Isso garante que todo novo usuário comece com o acesso básico.
+        usuario.setRole(Usuario.Role.USER);
+
         return usuarioRepository.save(usuario);
     }
 
@@ -36,27 +40,40 @@ public class UsuarioService {
         return usuarioRepository.findByEmail(username);
     }
 
+    /**
+     * Atualiza o status da assinatura do usuário.
+     * Este método agora atualiza a data de validade E o papel do usuário para SUBSCRIBER.
+     */
     @Transactional
     public void updateSubscriptionStatus(String email, int planDurationInDays) {
-        Optional<Usuario> optionalUsuario = usuarioRepository.findByEmail(email);
-        if (optionalUsuario.isPresent()) {
-            Usuario usuario = optionalUsuario.get();
-            LocalDateTime currentValidDate = usuario.getAcessoValidoAte();
-            LocalDateTime newValidDate;
+        // Busca o usuário pelo e-mail
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o email: " + email));
 
-            if (currentValidDate == null || currentValidDate.isBefore(LocalDateTime.now())) {
-                newValidDate = LocalDateTime.now().plusDays(planDurationInDays);
-            } else {
-                newValidDate = currentValidDate.plusDays(planDurationInDays);
-            }
+        // Lógica para calcular a nova data de validade
+        LocalDateTime currentValidDate = usuario.getAcessoValidoAte();
+        LocalDateTime newValidDate;
 
-            usuario.setAcessoValidoAte(newValidDate);
-            usuarioRepository.save(usuario);
+        if (currentValidDate == null || currentValidDate.isBefore(LocalDateTime.now())) {
+            // Se não há assinatura ativa, começa a contar de agora
+            newValidDate = LocalDateTime.now().plusDays(planDurationInDays);
+        } else {
+            // Se já há uma assinatura ativa, adiciona os dias ao final dela
+            newValidDate = currentValidDate.plusDays(planDurationInDays);
         }
+
+        usuario.setAcessoValidoAte(newValidDate);
+
+        // <<< MUDANÇA AQUI: Promove o usuário para o papel de assinante.
+        // É ESSENCIAL para que o WebSecurityConfig permita o acesso às áreas restritas.
+        usuario.setRole(Usuario.Role.SUBSCRIBER);
+
+        // Salva as alterações no banco de dados
+        usuarioRepository.save(usuario);
     }
 
     /**
-     * NOVO MÉTODO: Verifica se o e-mail está na lista de acesso liberado.
+     * Verifica se o e-mail está na lista de acesso liberado (whitelist).
      * @param email O email a ser verificado.
      * @return true se o e-mail estiver na lista, false caso contrário.
      */

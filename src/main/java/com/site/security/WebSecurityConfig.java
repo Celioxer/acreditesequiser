@@ -23,14 +23,19 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Permite acesso a páginas públicas
+                        // 1. Regras para acesso público (sem login)
                         .requestMatchers("/", "/home", "/register/**", "/login", "/css/**", "/js/**", "/img/**").permitAll()
-                        // Permite acesso público ao endpoint de webhook
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
-                        // Permite acesso a paginas de conteudos para usuarios logados
-                        .requestMatchers("/apoiadores", "/episodios", "/conteudo-protegido", "/subscription", "/checkout", "/process-card-payment").authenticated() // << ADICIONADO AQUI
-                        // Todas as outras rotas devem ser autenticadas
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/qr/initiate", "/api/auth/qr/status/**").permitAll()
+
+                        // 2. Regras para páginas de pagamento (qualquer usuário logado)
+                        .requestMatchers("/subscription", "/checkout", "/process-card-payment").hasAnyAuthority("ROLE_USER", "ROLE_SUBSCRIBER", "ROLE_ADMIN")
+
+                        // 3. Regras para conteúdo restrito (assinantes ou admins)
+                        .requestMatchers("/apoiadores", "/episodios", "/conteudo-protegido").hasAnyAuthority("ROLE_SUBSCRIBER", "ROLE_ADMIN")
+
+                        // 4. Regra final: Qualquer outra requisição deve ser feita por um ADMIN
+                        .anyRequest().hasAuthority("ROLE_ADMIN")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -42,7 +47,8 @@ public class WebSecurityConfig {
                         .permitAll()
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/register")
+                        // Desabilita CSRF para a API e o formulário de registro
+                        .ignoringRequestMatchers("/register", "/api/**")
                 );
 
         return http.build();
