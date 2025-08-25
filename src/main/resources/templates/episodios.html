@@ -38,7 +38,7 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <!-- JS -->
-<script th:src="@{/js/episodios.js}"></script>
+<script th:src="@{/js/episodios.js(v=${#dates.createNow().getTime()})}"></script>
 <script th:src="@{/js/script.js}" defer></script>
 </body>
 </html>
