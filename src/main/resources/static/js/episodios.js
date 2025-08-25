@@ -1,25 +1,43 @@
 document.addEventListener('DOMContentLoaded', function() {
     // =================================================================================
-    // FUNÇÃO GERADORA HÍBRIDA
+    // FUNÇÃO AUXILIAR PARA ESCOLHER A PASTA PÚBLICA
+    // =================================================================================
+    function getPastaPublica(numeroEpisodio) {
+        const num = parseInt(numeroEpisodio, 10);
+
+        if (num >= 1 && num <= 50) {
+            return '/1-50/';
+        } else if (num >= 51 && num <= 100) {
+            return '/51 - 100/';
+        } else if (num >= 101 && num <= 150) {
+            return '/101 - 150/';
+        } else if (num >= 151 && num <= 200) {
+            return '/151-200/';
+        } else if (num >= 201) {
+            return '/201 - ate o ultimo/';
+        } else {
+            return '/'; // Pasta padrão caso algo dê errado
+        }
+    }
+
+    // =================================================================================
+    // FUNÇÃO GERADORA HÍBRIDA ATUALIZADA
     // =================================================================================
     function criarEpisodio(dados) {
         const baseURL = 'https://pub-9083d14195514a9f89133574d545efc9.r2.dev/Episódios';
 
+        // A mágica acontece aqui: a pasta é escolhida com base na lógica
         const pasta = dados.exclusivo
             ? '/Exclusivos para assinantes/'
-            : '/1-50/'; // Pasta padrão para os MP3s públicos
+            : getPastaPublica(dados.numero);
 
-        // Remove o número do início do título para gerar o nome do arquivo corretamente
-        const tituloLimpo = dados.titulo.replace(/^\d+\s*-\s*/, '');
-        const nomeArquivo = encodeURIComponent(tituloLimpo);
+        const nomeArquivo = encodeURIComponent(dados.titulo);
 
-        // LÓGICA HÍBRIDA PARA A CAPA:
-        // Se uma URL de capa for fornecida nos dados (ex: Spotify), use-a.
-        // Caso contrário (para os exclusivos), gere a URL automaticamente.
-        const capaURL = dados.capa ? dados.capa : `${baseURL}${pasta}${encodeURIComponent(dados.titulo)}.png`;
+        // Lógica Híbrida para a Capa
+        const capaURL = dados.capa ? dados.capa : `${baseURL}${pasta}${nomeArquivo}.png`;
 
-        // A URL de download é sempre gerada automaticamente a partir do título
-        const downloadURL = `${baseURL}${pasta}${encodeURIComponent(dados.titulo)}.mp3`;
+        // A URL de download é sempre gerada com a pasta correta
+        const downloadURL = `${baseURL}${pasta}${nomeArquivo}.mp3`;
 
         return {
             numero: dados.numero,
@@ -30,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
             download: downloadURL
         };
     }
-
 
     // =================================================================================
     // DADOS BRUTOS DOS EPISÓDIOS - LISTA COMPLETA E UNIFICADA
@@ -255,7 +272,25 @@ document.addEventListener('DOMContentLoaded', function() {
         { numero: '198', titulo: '198 - Caso Mauricio', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
         { numero: '199', titulo: '199 - Vôos Misteriosos - Parte 1', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
         { numero: '200', titulo: '200 - Bases Militares Secretas', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
-
+        { numero: '201', titulo: '201 - A Ufologia e Sobrenatural', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '202', titulo: '202 - O Estranho Caso da Chuva de Detritos', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '203', titulo: '203 - Mitos da Internet', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '204', titulo: '204 - Bruxaria', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '205', titulo: '205 - O Relatorio Harald Malmgren', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '206', titulo: '206 - Relatos de Lobisomem 2', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '207', titulo: '207 - Crianças Cósmicas', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '208', titulo: '208 - O Vídeo do Drone', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '209', titulo: '209 - Segredos da Maçonaria', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '210', titulo: '210 - Operação Prato', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '211', titulo: '211 - Mortes Bizarras', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '212', titulo: '212 - Dogons', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '213', titulo: '213 - Vampiros', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '214', titulo: '214 - Investigação Militar', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '215', titulo: '215 - As Gravações do Cindacta', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '216', titulo: '216 - Caso Salyut 6', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '217', titulo: '217 - Ufoarqueologia', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '218', titulo: '218 - Ooparts', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
+        { numero: '219', titulo: '219 - Estranhos Visitantes', descricao: 'Descrição pendente...', capa: 'URL_DA_CAPA_SPOTIFY_AQUI', exclusivo: false },
             // --- EPISÓDIOS EXCLUSIVOS ---
                    // Para estes, não precisamos especificar a 'capa', pois ela será gerada automaticamente.
                    {
