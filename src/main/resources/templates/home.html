@@ -32,35 +32,9 @@
         <div class="container">
             <h2>Episódios em Destaque</h2>
 
-            <div class="episode-grid">
-
-                <div class="episode-card">
-                    <img src="https://placehold.co/400x250/1d2a2d/BE93FD?text=Episódio+1" alt="O Mistério de Roswell">
-                    <div class="card-content">
-                        <h3>O Mistério de Roswell</h3>
-                        <p>Uma análise profunda sobre o que realmente aconteceu no deserto do Novo México em 1947.</p>
-                        <span class="exclusive-tag">Exclusivo para Assinantes</span>
-                    </div>
-                </div>
-
-                <div class="episode-card">
-                    <img src="https://placehold.co/400x250/1d2a2d/BE93FD?text=Episódio+2" alt="Operação Prato">
-                    <div class="card-content">
-                        <h3>Operação Prato</h3>
-                        <p>Os documentos oficiais e os relatos de testemunhas sobre os OVNIs na Amazônia brasileira.</p>
-                        <span class="exclusive-tag">Exclusivo para Assinantes</span>
-                    </div>
-                </div>
-
-                <div class="episode-card">
-                    <img src="https://placehold.co/400x250/1d2a2d/BE93FD?text=Episódio+3" alt="A Conspiração da Área 51">
-                    <div class="card-content">
-                        <h3>A Conspiração da Área 51</h3>
-                        <p>Separando os fatos da ficção sobre a base militar mais secreta do mundo.</p>
-                        <span class="exclusive-tag">Exclusivo para Assinantes</span>
-                    </div>
-                </div>
+            <div class="episode-grid" id="destaques-grid">
             </div>
+
         </div>
     </section>
 
@@ -85,5 +59,9 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:src="@{/js/episodios.js(v=${#dates.createNow().getTime()})}"></script>
+<script th:src="@{/js/home-destaques.js}"></script>
+
 <script th:src="@{/js/script.js}" defer></script>
 </body>
+</html>

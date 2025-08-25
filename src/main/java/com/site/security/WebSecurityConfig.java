@@ -24,7 +24,17 @@ public class WebSecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // 1. Regras para acesso público (sem login)
-                        .requestMatchers("/", "/home", "/register/**", "/login", "/css/**", "/js/**", "/img/**").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/home",
+                                "/register/**",
+                                "/login",
+                                "/forgot-password", // <<< ROTA ADICIONADA AQUI
+                                "/reset-password",  // <<< ROTA ADICIONADA AQUI
+                                "/css/**",
+                                "/js/**",
+                                "/img/**"
+                        ).permitAll()
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
                         .requestMatchers("/api/auth/qr/initiate", "/api/auth/qr/status/**").permitAll()
 
@@ -34,8 +44,9 @@ public class WebSecurityConfig {
                         // 3. Regras para conteúdo restrito (assinantes ou admins)
                         .requestMatchers("/apoiadores", "/episodios", "/conteudo-protegido").hasAnyAuthority("ROLE_SUBSCRIBER", "ROLE_ADMIN")
                         .requestMatchers("/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
-                        // 4. Regra final: Qualquer outra requisição deve ser feita por um ADMIN
-                        .anyRequest().hasAuthority("ROLE_ADMIN")
+
+                        // 4. Regra final: Qualquer outra requisição deve ser feita por um ADMIN (ou usuário autenticado, dependendo da sua regra)
+                        .anyRequest().authenticated() // Mudei para authenticated() que é mais comum. Se quiser mais restrito, volte para hasAuthority("ROLE_ADMIN")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
@@ -48,7 +59,7 @@ public class WebSecurityConfig {
                 )
                 .csrf(csrf -> csrf
                         // Desabilita CSRF para a API e o formulário de registro
-                        .ignoringRequestMatchers("/register", "/api/**")
+                        .ignoringRequestMatchers("/register", "/api/**", "/forgot-password", "/reset-password")
                 );
 
         return http.build();

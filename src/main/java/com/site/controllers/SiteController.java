@@ -21,8 +21,8 @@ public class SiteController {
         return "contato";
     }
 
-    @GetMapping("/apoiadores")
-    public String apoiadores() {
-        return "apoiadores";
-    }
+   // @GetMapping("/apoiadores")
+   // public String apoiadores() {
+     //   return "apoiadores";
+
 }

@@ -21,6 +21,21 @@
                 Sua contribuição é fundamental para continuarmos nossa exploração dos maiores mistérios do universo. Agora, você faz parte do círculo interno de investigadores.
             </p>
 
+            <div class="subscription-validity">
+                <p>
+                    Lembre-se: o acesso aos benefícios, como o grupo de WhatsApp e os episódios exclusivos, é válido enquanto sua assinatura estiver ativa.
+                </p>
+
+                <p th:if="${usuario.role.name() == 'ADMIN'}" class="validity-date">
+                    <strong>Seu acesso como Administrador é permanente.</strong>
+                </p>
+
+                <p th:if="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null}" class="validity-date">
+                    <strong>Sua assinatura é válida até:
+                        <span th:text="${#temporals.format(usuario.acessoValidoAte, 'dd/MM/yyyy')}">31/12/2025</span>
+                    </strong>
+                </p>
+            </div>
             <hr class="welcome-divider">
 
             <div class="welcome-cta">

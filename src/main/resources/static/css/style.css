@@ -451,52 +451,58 @@ footer.main-footer .social-links a {
     }
 }
 /* =================================
-   PÁGINA DE EPISÓDIOS - CARDS
+   PÁGINA DE EPISÓDIOS - CONTEINER E FILTROS
 ==================================== */
+.episodios-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-.episodios-container .filtro-container {
+.filtro-container {
     text-align: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #3d2c4b;
     margin-bottom: 40px;
 }
-.episodios-container h1 {
-    margin-bottom: 20px;
+
+.filtro-container h1 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
 }
-.secao-episodios {
-    margin-bottom: 60px;
+
+#busca-episodio {
+    width: 100%;
+    max-width: 500px;
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid #3C8F9E;
+    border-radius: 25px;
+    background-color: #1d2a2d;
+    color: #D6C178;
+    margin-bottom: 10px;
 }
+
 .secao-episodios h2 {
     color: #BE93FD;
-    border-bottom: 2px solid #3d2c4b;
     padding-bottom: 10px;
     margin-bottom: 30px;
-    font-size: 2rem;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-.secao-episodios h2 .fas {
-    margin-right: 10px;
+
+/* =================================
+   GRID E CARDS DE EPISÓDIOS (VERSÃO MELHORADA)
+==================================== */
+.episodios-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Começa com 1 coluna para mobile-first */
+    gap: 20px; /* Espaçamento para mobile */
 }
 
-//* =================================
-    GRIDS DE EPISÓDIOS (VERSÃO CORRIGIDA SEM CONFLITO)
- ==================================== */
-
- /* Estilo ESPECÍFICO para o Grid de Destaques na HOMEPAGE */
- .featured-episodes .episode-grid {
-     display: grid;
-     /* Cards um pouco maiores na home para dar destaque */
-     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-     gap: 30px;
-     margin-top: 40px;
- }
-
- /* Estilo ESPECÍFICO para o Grid na PÁGINA DE EPISÓDIOS */
- .episodios-container .episodios-grid {
-     display: grid;
-     /* Cards um pouco menores na página principal para caber mais */
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 30px;
- }
-
-/* --- Card Padrão --- */
+/* --- Card --- */
 .episodio-card {
     background-color: #1d2a2d;
     border: 1px solid #3d2c4b;
@@ -505,25 +511,33 @@ footer.main-footer .social-links a {
     position: relative;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .episodio-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 10px 25px rgba(190, 147, 253, 0.2);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(190, 147, 253, 0.15);
+}
+
+/* --- Imagem do Card (COM CORREÇÃO DE ASPECT RATIO) --- */
+.card-image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Força a imagem a ser quadrada (1:1) */
+    background-color: #0A1517; /* Cor de fundo enquanto a imagem carrega */
 }
 
 .card-cover {
     width: 100%;
-    height: 180px;
-    object-fit: cover;
+    height: 100%;
+    object-fit: cover; /* Garante que a imagem preencha o container sem distorcer */
 }
 
+/* --- Corpo do Card --- */
 .card-body {
-    padding: 20px;
+    padding: 15px; /* Padding para mobile */
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Faz este corpo crescer para preencher o card */
+    flex-grow: 1;
 }
 
 .ep-number {
@@ -535,35 +549,138 @@ footer.main-footer .social-links a {
 
 .ep-title {
     color: #D6C178;
-    font-size: 1.4rem;
+    font-size: 1.2rem; /* Tamanho para mobile */
     margin-bottom: 10px;
     line-height: 1.3;
 }
 
 .ep-description {
     color: #ccc;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    flex-grow: 1; /* Empurra o botão para baixo */
+    font-size: 0.9rem; /* Tamanho para mobile */
+    flex-grow: 1;
+    margin-bottom: 15px;
+}
+
+.card-badge {
+    position: absolute;
+    top: 10px;
+    right: -1px;
+    background-color: #BE93FD;
+    color: #1d2a2d;
+    padding: 5px 15px 5px 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+/* --- Ações do Card (Botões e Player) --- */
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
 }
 
 .btn-card {
-    display: block;
-    width: 100%;
+    border: none;
     padding: 12px;
-    margin-top: 20px;
-    background-color: #3C8F9E;
-    color: #fff;
-    text-align: center;
-    text-decoration: none;
     border-radius: 5px;
     font-weight: bold;
+    cursor: pointer;
     transition: background-color 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
 }
-.btn-card:hover {
+
+.btn-play {
+    flex-grow: 1;
+    background-color: #3C8F9E;
+    color: #fff;
+}
+.btn-play:hover {
     background-color: #4db1c0;
 }
 
+.btn-icon {
+    flex-shrink: 0;
+    width: 45px;
+    padding: 0;
+    font-size: 1.1rem;
+    background-color: #2a3c40;
+    color: #D6C178;
+}
+.btn-icon:hover {
+    background-color: #3c565c;
+}
+
+.episodio-card.exclusivo .btn-play {
+    background-color: #BE93FD;
+    color: #1d2a2d;
+}
+.episodio-card.exclusivo .btn-play:hover {
+    background-color: #D6C178;
+}
+
+/* --- Player de Áudio (COM MELHORIAS) --- */
+.card-player-wrapper audio {
+    width: 100%;
+    height: 45px; /* Altura maior para facilitar o toque */
+}
+
+/* Estilizando a barra de progresso (timeline) para ser mais fácil de usar */
+audio::-webkit-media-controls-timeline {
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+/* Paginação */
+.paginacao {
+    text-align: center;
+    padding: 20px 0;
+}
+.paginacao button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    /* ... (seus estilos de botão) ... */
+}
+
+
+/* =================================
+   LAYOUT PARA TABLETS E DESKTOPS
+==================================== */
+@media (min-width: 600px) {
+    .episodios-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas para tablets */
+    }
+}
+
+@media (min-width: 992px) {
+    .episodios-container {
+        padding: 40px;
+    }
+    .episodios-grid {
+        /* Aumenta o tamanho mínimo para evitar muitos cards pequenos */
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px; /* Aumenta o espaçamento */
+    }
+
+    .card-body {
+        padding: 20px; /* Restaura o padding maior */
+    }
+
+    .ep-title {
+        font-size: 1.4rem; /* Restaura o tamanho da fonte */
+    }
+
+    .ep-description {
+        font-size: 0.95rem; /* Restaura o tamanho da fonte */
+    }
+}
 /* --- Estilo Específico do Card Exclusivo --- */
 .episodio-card.exclusivo {
     border-color: #BE93FD;
@@ -736,4 +853,34 @@ footer.main-footer .social-links a {
  }
  .btn-episodios:hover {
      background-color: #fff;
+ }
+ /* =================================
+    CORREÇÕES RESPONSIVAS ADICIONAIS
+ ==================================== */
+
+ /* Aplica a regra apenas em telas de até 768px (celulares e tablets) */
+ @media (max-width: 768px) {
+
+     /* Seleciona o elemento h1 com a classe 'welcome-greeting' */
+     .welcome-greeting {
+         /* Permite que palavras longas e inquebráveis (como e-mails)
+            sejam forçadas a quebrar para a linha de baixo */
+         word-wrap: break-word;
+         overflow-wrap: break-word;
+
+         /* Opcional: uma regra um pouco mais agressiva se a de cima não for suficiente */
+         /* word-break: break-all; */
+     }
+ }
+ /* ==================================================
+    AJUSTE PARA CARDS DE DESTAQUE NA PÁGINA INICIAL
+ ===================================================== */
+
+ /* Este seletor mira no container da imagem (.card-image-container)
+   que está DENTRO da seção com ID #destaques (a sua seção na home).
+   Isso garante que a regra não afete a página de episódios.
+ */
+ #destaques .card-image-container {
+     /* Define uma proporção retangular (widescreen) em vez de quadrada (1/1) */
+     aspect-ratio: 16 / 9;
  }

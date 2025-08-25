@@ -44,6 +44,8 @@ public class Usuario {
 
     // <<< MUDANÇA AQUI: Adição do campo telefone
     private String telefone;
+    private String passwordResetToken;
+    private LocalDateTime passwordResetTokenExpiry;
 
 
     // Getters e Setters
@@ -66,6 +68,11 @@ public class Usuario {
     // <<< MUDANÇA AQUI: Getters e Setters para telefone
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
+    public String getPasswordResetToken() { return passwordResetToken; }
+    public void setPasswordResetToken(String passwordResetToken) { this.passwordResetToken = passwordResetToken; }
+    public LocalDateTime getPasswordResetTokenExpiry() { return passwordResetTokenExpiry; }
+    public void setPasswordResetTokenExpiry(LocalDateTime passwordResetTokenExpiry) { this.passwordResetTokenExpiry = passwordResetTokenExpiry; }
+
 
 
     // hashCode e equals
