@@ -33,7 +33,7 @@ public class WebSecurityConfig {
 
                         // 3. Regras para conteúdo restrito (assinantes ou admins)
                         .requestMatchers("/apoiadores", "/episodios", "/conteudo-protegido").hasAnyAuthority("ROLE_SUBSCRIBER", "ROLE_ADMIN")
-
+                        .requestMatchers("/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
                         // 4. Regra final: Qualquer outra requisição deve ser feita por um ADMIN
                         .anyRequest().hasAuthority("ROLE_ADMIN")
                 )
