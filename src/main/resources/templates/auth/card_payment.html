@@ -1,204 +1,110 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Pagamento com Cartão</title>
-    <!-- Inclua o SDK do Mercado Pago para gerar o token de forma segura -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            width: 100%;
-            max-width: 450px;
-            padding: 30px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h2 {
-            font-size: 1.8rem;
-            color: #333;
-            margin-bottom: 25px;
-        }
-        form div {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1rem;
-            color: #333;
-        }
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #009ee3;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            margin-top: 15px;
-        }
-        button:hover {
-            background-color: #0087c0;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
+        body.auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .payment-container { width: 100%; max-width: 450px; padding: 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); text-align: center; border: 1px solid #ddd; }
+        .payment-container h2 { font-size: 1.8rem; color: #333; margin-bottom: 10px; }
+        .payment-summary { color: #555; margin-bottom: 25px; }
+        form div.form-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        .input-mp, .input-std { width: 100%; height: 45px; border: 1px solid #ddd; border-radius: 8px; padding: 0 10px; font-size: 1rem; box-sizing: border-box; }
+        select.input-std { padding: 0 10px; }
+        #form-checkout__submit { width: 100%; padding: 12px; background-color: #009ee3; color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 15px; }
     </style>
 </head>
 <body class="auth-page">
 
-<div class="container">
+<div class="payment-container">
     <h2>Pagamento com Cartão</h2>
+    <p class="payment-summary">
+        Você está apoiando com <strong th:text="${'R$ ' + #numbers.formatDecimal(valor, 1, 'POINT', 2, 'COMMA')}">R$ 10,00</strong>.
+    </p>
 
     <form id="form-checkout">
-        <!-- Campos escondidos para enviar os dados do plano -->
-        <input type="hidden" name="plan" th:value="${plan}">
-        <input type="hidden" name="paymentMethod" value="card">
-
-        <!-- Campos do Mercado Pago que o JS irá preencher com o token -->
-        <input type="hidden" id="token" name="token">
-
-        <div class="form-group">
-            <label for="cardNumber">Número do Cartão</label>
-            <input type="text" id="cardNumber" data-checkout="cardNumber" required>
-        </div>
-
-        <div class="form-group">
-            <label for="cardholderName">Nome no Cartão</label>
-            <input type="text" id="cardholderName" data-checkout="cardholderName" required>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="cardExpirationMonth">Mês de Expiração</label>
-                <input type="text" id="cardExpirationMonth" data-checkout="cardExpirationMonth" placeholder="MM" required>
-            </div>
-            <div class="form-group">
-                <label for="cardExpirationYear">Ano de Expiração</label>
-                <input type="text" id="cardExpirationYear" data-checkout="cardExpirationYear" placeholder="AAAA" required>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="securityCode">Código de Segurança (CVV)</label>
-            <input type="text" id="securityCode" data-checkout="securityCode" required>
-        </div>
-
-        <button type="submit">Pagar</button>
+        <div class="form-group"><label for="cardNumber">Número do Cartão</label><div id="cardNumber" class="input-mp"></div></div>
+        <div class="form-group"><label for="cardExpirationDate">Data de Vencimento</label><div id="cardExpirationDate" class="input-mp"></div></div>
+        <div class="form-group"><label for="securityCode">Código de Segurança (CVV)</label><div id="securityCode" class="input-mp"></div></div>
+        <div class="form-group"><label for="installments">Parcelas</label><div id="installments" class="input-mp"></div></div>
+        <div class="form-group"><label for="cardholderName">Nome do Titular</label><input type="text" id="cardholderName" class="input-std" /></div>
+        <div class="form-group"><label for="cardholderEmail">E-mail</label><input type="email" id="cardholderEmail" class="input-std" /></div>
+        <div class="form-group"><label for="identificationType">Tipo de documento</label><select id="identificationType" class="input-std"></select></div>
+        <div class="form-group"><label for="identificationNumber">Número do documento</label><input type="text" id="identificationNumber" class="input-std" /></div>
+        <button type="submit" id="form-checkout__submit">Pagar</button>
     </form>
 </div>
 
 <script th:inline="javascript">
-    // Inicialize o SDK com sua chave pública de teste
-    // Lembre-se de substituir 'SUA_PUBLIC_KEY_DE_TESTE'
-    const mp = new MercadoPago('APP_USR-6b43d260-2d40-4a94-807d-80a43ee05a7c', {
-        locale: 'pt-BR'
-    });
+    const valorPagamento = /*[[${valor}]]*/ '10.00';
+    const descricaoPagamento = /*[[${descricao}]]*/ 'Apoio Mensal';
 
-    // Crie o formulário de checkout
+    // <<< VERIFIQUE SE ESTA CHAVE É EXATAMENTE IGUAL À SUA PUBLIC KEY DE TESTE NO PAINEL MP >>>
+    const publicKey = 'APP_USR-7096982883387042-082007-1d72c0c0f8ce2f421e0ef79d89127968-4764188';
+
+    const mp = new MercadoPago(publicKey, { locale: 'pt-BR' });
+
     const cardForm = mp.cardForm({
-        amount: [[${valor}]],
+        amount: valorPagamento.toString(),
         iframe: true,
         form: {
             id: "form-checkout",
-            cardNumber: { id: "cardNumber", placeholder: "Número do Cartão" },
-            cardholderName: { id: "cardholderName", placeholder: "Nome impresso no cartão" },
-            cardExpirationMonth: { id: "cardExpirationMonth", placeholder: "MM" },
-            cardExpirationYear: { id: "cardExpirationYear", placeholder: "AAAA" },
+            cardNumber: { id: "cardNumber", placeholder: "0000 0000 0000 0000" },
+            cardExpirationDate: { id: "cardExpirationDate", placeholder: "MM/AA" },
             securityCode: { id: "securityCode", placeholder: "CVV" },
+            installments: { id: "installments", placeholder: "Selecione" },
+            cardholderName: { id: "cardholderName", placeholder: "Nome como no cartão" },
+            cardholderEmail: { id: "cardholderEmail", placeholder: "seu@email.com" },
+            identificationType: { id: "identificationType" },
+            identificationNumber: { id: "identificationNumber", placeholder: "Seu documento" }
         },
         callbacks: {
             onFormMounted: error => {
-                if (error) return console.warn("Form Mounted Handling Error: ", error);
-                console.log("Form Mounted");
+                if (error) return console.warn("Erro ao montar o formulário:", error);
             },
             onSubmit: event => {
                 event.preventDefault();
+                const submitButton = document.getElementById('form-checkout__submit');
+                submitButton.disabled = true;
 
-                // Tokeniza os dados do cartão
-                mp.createCardToken({
-                    cardNumber: document.getElementById("cardNumber").value,
-                    cardholderName: document.getElementById("cardholderName").value,
-                    cardExpirationMonth: document.getElementById("cardExpirationMonth").value,
-                    cardExpirationYear: document.getElementById("cardExpirationYear").value,
-                    securityCode: document.getElementById("securityCode").value,
-                }).then(response => {
-                    // Envie o token para o seu backend
-                    fetch("/process-card-payment", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            token: response.id,
-                            plan: document.querySelector('input[name="plan"]').value,
-                            paymentMethod: document.querySelector('input[name="paymentMethod"]').value
-                        })
+                const { token, installments } = cardForm.getCardFormData();
+
+                fetch("/process-card-payment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        token: token,
+                        valor: valorPagamento.toString(),
+                        descricao: descricaoPagamento,
+                        installments: installments
                     })
-                    .then(res => {
-                        // Verifique se a resposta é um redirecionamento
-                        if (res.redirected) {
-                            window.location.href = res.url;
-                        } else {
-                            // Se não for um redirecionamento, lide com a resposta JSON
-                            return res.json().then(data => {
-                                // Redirecione com base na URL recebida no JSON
-                                if (data.redirectUrl) {
-                                    window.location.href = data.redirectUrl;
-                                } else {
-                                    // Se não houver URL de redirecionamento, exiba um erro
-                                    console.error("Erro na resposta do servidor: URL de redirecionamento ausente");
-                                    alert("Ocorreu um erro no pagamento.");
-                                }
-                            }).catch(error => {
-                                console.error("Erro ao processar resposta JSON: ", error);
-                                alert("Ocorreu um erro ao processar o pagamento.");
-                            });
-                        }
-                    }).catch(error => {
-                        // Lide com erros de rede ou de resposta do servidor
-                        console.error("Erro na requisição: ", error);
-                        alert("Ocorreu um erro ao processar o pagamento.");
-                    });
-                }).catch(error => {
-                    // Lide com o erro de tokenização do cartão
-                    console.error("Erro ao tokenizar o cartão: ", error);
-                    alert("Ocorreu um erro ao processar seu cartão.");
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.redirectUrl) {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        alert("Erro no pagamento: " + (data.error || "Tente novamente."));
+                        submitButton.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro na requisição:", error);
+                    alert("Ocorreu um erro ao processar o pagamento.");
+                    submitButton.disabled = false;
                 });
-            }
-        }
+            },
+            onError: (errors) => {
+                console.error("Erros de validação do formulário:", errors);
+                const firstError = errors[0] || {};
+                alert("Por favor, corrija os erros no formulário: " + (firstError.message || "Dados inválidos."));
+            },
+        },
     });
-
 </script>
+
 </body>
 </html>

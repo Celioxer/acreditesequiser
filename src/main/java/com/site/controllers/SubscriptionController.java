@@ -3,8 +3,8 @@ package com.site.controllers;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
-import com.site.services.MercadoPagoService;
 import com.site.models.Usuario;
+import com.site.services.MercadoPagoService;
 import com.site.services.UsuarioService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,11 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class SubscriptionController {
@@ -34,71 +32,49 @@ public class SubscriptionController {
         this.usuarioService = usuarioService;
     }
 
-    /**
-     * Exibe a página de seleção de planos.
-     */
     @GetMapping("/subscription")
     public String showSubscriptionPage() {
-        // A lógica de verificação de acesso foi movida para o CustomAuthenticationSuccessHandler.
         return "auth/subscription";
     }
 
     /**
-     * Processa a seleção do plano e método de pagamento.
+     * Processa o checkout com valor e método de pagamento dinâmicos.
      */
     @GetMapping("/checkout")
     public String checkout(
-            @RequestParam("plan") String plan,
+            @RequestParam("valor") BigDecimal valor,
             @RequestParam("paymentMethod") String paymentMethod,
             Authentication authentication,
             RedirectAttributes redirectAttributes,
             Model model) {
 
-        String username = authentication.getName();
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
+        // Validação do valor mínimo no backend (importante para segurança)
+        if (valor.compareTo(new BigDecimal("10.00")) < 0) {
+            redirectAttributes.addFlashAttribute("error", "O valor do apoio deve ser de no mínimo R$ 10,00.");
+            return "redirect:/subscription";
+        }
 
-        if (!optionalUsuario.isPresent()) {
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
+        if (optionalUsuario.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
             return "redirect:/subscription";
         }
-
         Usuario usuario = optionalUsuario.get();
-        String email = usuario.getEmail();
-        String nome = usuario.getNome();
-        String cpf = usuario.getCpf();
 
-        BigDecimal valor;
-        String descricao;
-
-        if (Objects.equals(plan, "basic")) {
-            valor = new BigDecimal("10.00");
-            descricao = "Plano Básico - 30 dias de acesso";
-        } else if (Objects.equals(plan, "premium")) {
-            valor = new BigDecimal("30.00");
-            descricao = "Plano Premium - 30 dias + Conteúdo Exclusivo";
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Plano de assinatura inválido.");
-            return "redirect:/subscription";
-        }
+        String descricao = "Apoio Mensal - Acesso Apoiador";
 
         if ("pix".equals(paymentMethod)) {
             try {
-                // AQUI ESTÁ A CORREÇÃO:
-                // Passamos o objeto 'usuario' inteiro, a descrição e o valor.
-                Payment payment = mercadoPagoService.createPixPayment(
-                        usuario, descricao, valor // <-- 3 argumentos corretos
-                );
+                Payment payment = mercadoPagoService.createPixPayment(usuario, descricao, valor);
                 String pixUrl = payment.getPointOfInteraction().getTransactionData().getTicketUrl();
                 return "redirect:" + pixUrl;
             } catch (MPException | MPApiException e) {
                 redirectAttributes.addFlashAttribute("error", "Erro ao criar pagamento Pix: " + e.getMessage());
                 return "redirect:/subscription";
             }
-
         } else if ("card".equals(paymentMethod)) {
             model.addAttribute("valor", valor);
             model.addAttribute("descricao", descricao);
-            model.addAttribute("plan", plan);
             return "auth/card_payment";
         } else {
             redirectAttributes.addFlashAttribute("error", "Método de pagamento inválido.");
@@ -115,58 +91,42 @@ public class SubscriptionController {
             Authentication authentication) {
 
         String token = payload.get("token");
-        String plan = payload.get("plan");
+        BigDecimal valor = new BigDecimal(payload.get("valor"));
+        String descricao = payload.get("descricao");
 
-        String username = authentication.getName();
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
-
-        if (!optionalUsuario.isPresent()) {
-            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro: Usuário não encontrado."));
+        // Validação do valor mínimo no backend
+        if (valor.compareTo(new BigDecimal("10.00")) < 0) {
+            return ResponseEntity.status(400).body(Map.of("error", "O valor do apoio deve ser de no mínimo R$ 10,00."));
         }
 
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
+        if (optionalUsuario.isEmpty()) {
+            return ResponseEntity.status(500).body(Map.of("error", "Erro: Usuário não encontrado."));
+        }
         Usuario usuario = optionalUsuario.get();
-        String email = usuario.getEmail();
-        String nome = usuario.getNome();
-        String cpf = usuario.getCpf();
 
-        BigDecimal valor;
-        String descricao;
-        int planoDuracaoDias;
-
-        if (Objects.equals(plan, "basic")) {
-            valor = new BigDecimal("10.00");
-            descricao = "Plano Básico - 30 dias de acesso";
-            planoDuracaoDias = 30;
-        } else { // Plano "premium"
-            valor = new BigDecimal("30.00");
-            descricao = "Plano Premium - 30 dias + Conteúdo Exclusivo";
-            planoDuracaoDias = 30;
-        }
+        int planoDuracaoDias = 30; // Sempre 30 dias de acesso
 
         try {
-            Payment payment = mercadoPagoService.createCardPayment(token, email, nome, cpf, descricao, valor);
+            Payment payment = mercadoPagoService.createCardPayment(token, usuario.getEmail(), usuario.getNome(), usuario.getCpf(), descricao, valor);
 
             if ("approved".equals(payment.getStatus())) {
-                usuarioService.updateSubscriptionStatus(email, planoDuracaoDias);
-                return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/episodios"));
+                usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
+                return ResponseEntity.ok(Map.of("redirectUrl", "/apoiadores"));
             } else {
-                return ResponseEntity.ok(Collections.singletonMap("redirectUrl", "/subscription"));
+                return ResponseEntity.ok(Map.of("redirectUrl", "/subscription?error=payment_refused"));
             }
         } catch (MPException | MPApiException e) {
-            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Erro ao processar pagamento: " + e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Erro ao processar pagamento: " + e.getMessage()));
         }
     }
 
-    /**
-     * Lida com o acesso a conteúdo protegido com restrições.
-     * Permite que usuários com assinatura ativa acessem a página.
-     */
     @GetMapping("/conteudo-protegido")
     public String getProtectedContent(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
         String username = authentication.getName();
         Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
 
-        if (!optionalUsuario.isPresent()) {
+        if (optionalUsuario.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
             return "redirect:/subscription";
         }
@@ -182,9 +142,6 @@ public class SubscriptionController {
         }
     }
 
-    /**
-     * Rota para a página de episódios. A verificação de acesso é feita pelo Security.
-     */
     @GetMapping("/episodios")
     public String showEpisodesPage() {
         return "episodios";

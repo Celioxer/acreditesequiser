@@ -1,63 +1,87 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Selecione seu Plano - Acredite Se Quiser</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
+<head th:replace="~{fragments/head :: common_head('Apoie o Projeto')}"></head>
+
 <body>
+<div class="sticky-footer-layout">
 
-<div th:replace="~{fragments/header :: header}"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
 
-<main>
-    <section class="plans-section">
-        <div class="container">
-            <h2>Apoie o Projeto e Desvende Mais Mistérios</h2>
-            <p class="section-subtitle">Sua contribuição é o combustível que nos permite continuar investigando o inexplicável. Escolha como você quer fazer parte disso.</p>
+    <main>
+        <section class="plans-section">
+            <div class="container">
+                <h2>Apoie o Projeto e Desvende Mais Mistérios</h2>
+                <p class="section-subtitle">Sua contribuição mensal é o combustível que nos permite continuar investigando o inexplicável. Escolha um valor e a forma de pagamento.</p>
 
-            <div th:if="${error}" class="alert alert-danger" role="alert">
-                <p th:text="${error}"></p>
-            </div>
-
-            <div class="plan-card-container">
-                <div class="plan-card">
-                    <h3>Apoio Essencial</h3>
-                    <div class="price">R$ 10,00<small>/mês</small></div>
-                    <p class="plan-slogan">"Acredite se quiser, mas já ajuda demais!"</p>
-                    <ul class="plan-features">
-                        <li><i class="fas fa-check"></i> Acesso a todos os episódios exclusivos.</li>
-                        <li><i class="fas fa-check"></i> Convite para o nosso grupo secreto no WhatsApp.</li>
-                    </ul>
-                    <div class="btn-container">
-                        <a th:href="@{/checkout(plan='basic', paymentMethod='pix', valor='10.00')}" class="btn btn-plan">Apoiar com R$ 10</a>
-                    </div>
+                <div th:if="${error}" class="alert alert-danger" role="alert" style="text-align: center; margin-bottom: 20px; color: #dc3545;">
+                    <p th:text="${error}"></p>
                 </div>
 
-                <div class="plan-card featured">
-                    <div class="featured-badge">Apoio Flexível</div>
-                    <h3>Colaborador Premium</h3>
-                    <div class="price">Você decide!<small>/mês</small></div>
-                    <p class="plan-slogan">"Estou acreditando mais ainda e quero impulsionar o projeto!"</p>
-                    <ul class="plan-features">
-                        <li><i class="fas fa-check"></i> Acesso a todos os episódios exclusivos.</li>
-                        <li><i class="fas fa-check"></i> Convite para o nosso grupo secreto no WhatsApp.</li>
-                    </ul>
-                    <div class="btn-container">
-                        <form id="colaboracaoForm" th:action="@{/checkout}" method="get" class="plan-form">
-                            <input type="hidden" name="plan" value="premium"/>
-                            <input type="hidden" name="paymentMethod" value="pix"/>
-                            <input type="number" id="valor" name="valor" step="0.01" min="10.00" placeholder="A partir de R$ 10,00" required/>
-                            <button type="submit" class="btn btn-plan">Apoiar com Pix</button>
+                <div class="plan-card-container">
+                    <div class="plan-card" style="max-width: 450px;">
+                        <h3>Apoio Flexível</h3>
+                        <p class="plan-slogan">"Faça parte do círculo interno de investigadores!"</p>
+
+                        <ul class="plan-features">
+                            <li><i class="fas fa-check"></i> Acesso a todos os episódios exclusivos.</li>
+                            <li><i class="fas fa-check"></i> Convite para o nosso grupo secreto no WhatsApp.</li>
+                        </ul>
+
+                        <form id="apoioForm" th:action="@{/checkout}" method="get" class="plan-form">
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="valor" style="display: block; margin-bottom: 5px;">Digite o valor do seu apoio mensal:</label>
+                                <input type="number" id="valor" name="valor"
+                                       step="0.01" min="10.00"
+                                       placeholder="Mínimo R$ 10,00" required
+                                       style="width: 100%; padding: 12px; font-size: 1.1em; text-align: center;"/>
+                            </div>
+
+                            <div class="btn-container" style="display: flex; flex-direction: column; gap: 15px;">
+                                <button type="button" onclick="submitForm('pix')" class="btn btn-plan">
+                                    <i class="fas fa-qrcode"></i> Apoiar com Pix
+                                </button>
+                                <button type="button" onclick="submitForm('card')" class="btn btn-plan">
+                                    <i class="fas fa-credit-card"></i> Apoiar com Cartão
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
-
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
 
-<div th:replace="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<script>
+    function submitForm(paymentMethod) {
+        const form = document.getElementById('apoioForm');
+
+        // 1. VERIFICA SE O FORMULÁRIO É VÁLIDO (INCLUINDO CAMPOS 'required')
+        if (!form.checkValidity()) {
+            // Se for inválido, pede ao navegador para mostrar a mensagem de erro padrão
+            // (Ex: "Preencha este campo") e interrompe a função.
+            form.reportValidity();
+            return;
+        }
+
+        // 2. O RESTO DA LÓGICA SÓ EXECUTA SE A VALIDAÇÃO PASSAR
+
+        // Adiciona um campo oculto com o método de pagamento
+        let methodInput = form.querySelector('input[name="paymentMethod"]');
+        if (!methodInput) {
+            methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = 'paymentMethod';
+            form.appendChild(methodInput);
+        }
+        methodInput.value = paymentMethod;
+
+        form.submit();
+    }
+</script>
+
 <script th:src="@{/js/script.js}" defer></script>
 </body>
 </html>
