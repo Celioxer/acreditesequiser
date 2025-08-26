@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody; // <-- Importação necessária
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -46,7 +47,6 @@ public class SubscriptionController {
             RedirectAttributes redirectAttributes,
             Model model) {
 
-        // Seu código original, que já funcionava, foi mantido intacto.
         if (valor.compareTo(new BigDecimal("10.00")) < 0) {
             redirectAttributes.addFlashAttribute("error", "O valor do apoio deve ser de no mínimo R$ 10,00.");
             return "redirect:/subscription";
@@ -78,12 +78,32 @@ public class SubscriptionController {
         }
     }
 
-    // ****** 1. NOVO MÉTODO ADICIONADO PARA EXIBIR A PÁGINA PENDENTE ******
     @GetMapping("/payment-pending")
     public String showPaymentPendingPage() {
         return "auth/payment-pending";
     }
 
+    // ****** 1. NOVO MÉTODO PARA A PÁGINA DE "AGUARDE" PÓS-PAGAMENTO APROVADO ******
+    @GetMapping("/payment-success-processing")
+    public String showPaymentSuccessProcessingPage() {
+        return "auth/payment-success-processing";
+    }
+
+    // ****** 2. NOVO ENDPOINT DE API PARA VERIFICAR O STATUS DA ASSINATURA ******
+    @GetMapping("/api/subscription/status")
+    @ResponseBody
+    public Map<String, Boolean> getSubscriptionStatus(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Map.of("active", false);
+        }
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
+        if (optionalUsuario.isPresent()) {
+            Usuario usuario = optionalUsuario.get();
+            boolean isActive = usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now());
+            return Map.of("active", isActive);
+        }
+        return Map.of("active", false);
+    }
 
     @PostMapping("/process-card-payment")
     public ResponseEntity<?> processCardPayment(
@@ -108,20 +128,18 @@ public class SubscriptionController {
                     paymentRequest.getValor(),
                     paymentRequest.getInstallments(),
                     paymentRequest.getPaymentMethodId(),
-                    paymentRequest.getIssuerId() // <-- Passe o issuerId aqui
+                    paymentRequest.getIssuerId()
             );
 
-            int planoDuracaoDias = 30;
-
-            // ****** 2. LÓGICA DE REDIRECIONAMENTO AJUSTADA ******
+            // ****** 3. LÓGICA DE REDIRECIONAMENTO AJUSTADA ******
             if ("approved".equals(payment.getStatus())) {
-                usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
-                return ResponseEntity.ok(Map.of("redirectUrl", "/apoiadores"));
+                // Redireciona para a página de "aguarde" para esperar o webhook
+                return ResponseEntity.ok(Map.of("redirectUrl", "/payment-success-processing"));
             } else if ("in_process".equals(payment.getStatus())) {
-                // Se o pagamento está pendente, redireciona para a nova página
+                // Redireciona para a página de "pagamento pendente em análise"
                 return ResponseEntity.ok(Map.of("redirectUrl", "/payment-pending"));
             } else {
-                // Para todos os outros status (rejeitado, etc.), volta com o erro
+                // Para pagamentos rejeitados, volta com a mensagem de erro
                 String errorRedirectUrl = "/subscription?error=payment_" + payment.getStatus()
                         + "&detail=" + payment.getStatusDetail();
                 return ResponseEntity.ok(Map.of("redirectUrl", errorRedirectUrl));
@@ -133,11 +151,25 @@ public class SubscriptionController {
         }
     }
 
-    // ... (restante dos seus métodos continua igual)
     @GetMapping("/conteudo-protegido")
     public String getProtectedContent(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
-        //...
-        return "protected-content-page";
+        String username = authentication.getName();
+        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
+
+        if (optionalUsuario.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
+            return "redirect:/subscription";
+        }
+
+        Usuario usuario = optionalUsuario.get();
+
+        if ((usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now()))) {
+            model.addAttribute("mensagem", "Bem-vindo! Você tem acesso ao conteúdo protegido.");
+            return "protected-content-page"; // Crie esta página se não existir
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Assinatura necessária para acessar este conteúdo.");
+            return "redirect:/subscription";
+        }
     }
 
     @GetMapping("/episodios")
