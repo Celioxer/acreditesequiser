@@ -3,7 +3,7 @@ package com.site.controllers;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
-import com.site.dto.PaymentRequestDTO; // <-- IMPORTAÇÃO DA NOVA CLASSE
+import com.site.dto.PaymentRequestDTO;
 import com.site.models.Usuario;
 import com.site.services.MercadoPagoService;
 import com.site.services.UsuarioService;
@@ -46,6 +46,7 @@ public class SubscriptionController {
             RedirectAttributes redirectAttributes,
             Model model) {
 
+        // Seu código original, que já funcionava, foi mantido intacto.
         if (valor.compareTo(new BigDecimal("10.00")) < 0) {
             redirectAttributes.addFlashAttribute("error", "O valor do apoio deve ser de no mínimo R$ 10,00.");
             return "redirect:/subscription";
@@ -77,18 +78,19 @@ public class SubscriptionController {
         }
     }
 
-    /**
-     * Lida com a requisição POST do formulário de cartão de forma segura e moderna.
-     */
+    // ****** 1. NOVO MÉTODO ADICIONADO PARA EXIBIR A PÁGINA PENDENTE ******
+    @GetMapping("/payment-pending")
+    public String showPaymentPendingPage() {
+        return "auth/payment-pending";
+    }
+
+
     @PostMapping("/process-card-payment")
-    // ****** ALTERAÇÃO PRINCIPAL AQUI ******
-    // Trocamos o Map por nossa classe DTO, tornando o código mais seguro.
     public ResponseEntity<?> processCardPayment(
             @RequestBody PaymentRequestDTO paymentRequest,
             Authentication authentication) {
 
         try {
-            // Validação do valor mínimo
             if (paymentRequest.getValor().compareTo(new BigDecimal("10.00")) < 0) {
                 return ResponseEntity.status(400).body(Map.of("error", "Valor mínimo: R$ 10,00."));
             }
@@ -99,12 +101,9 @@ public class SubscriptionController {
             }
             Usuario usuario = optionalUsuario.get();
 
-            // Chamada ao serviço do Mercado Pago agora usa os dados do DTO
             Payment payment = mercadoPagoService.createCardPayment(
+                    usuario, // Passa o objeto de usuário completo
                     paymentRequest.getToken(),
-                    usuario.getEmail(), // Usar o e-mail do usuário autenticado é mais seguro
-                    usuario.getNome(),
-                    usuario.getCpf(),
                     paymentRequest.getDescricao(),
                     paymentRequest.getValor(),
                     paymentRequest.getInstallments(),
@@ -113,10 +112,15 @@ public class SubscriptionController {
 
             int planoDuracaoDias = 30;
 
+            // ****** 2. LÓGICA DE REDIRECIONAMENTO AJUSTADA ******
             if ("approved".equals(payment.getStatus())) {
                 usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
                 return ResponseEntity.ok(Map.of("redirectUrl", "/apoiadores"));
+            } else if ("in_process".equals(payment.getStatus())) {
+                // Se o pagamento está pendente, redireciona para a nova página
+                return ResponseEntity.ok(Map.of("redirectUrl", "/payment-pending"));
             } else {
+                // Para todos os outros status (rejeitado, etc.), volta com o erro
                 String errorRedirectUrl = "/subscription?error=payment_" + payment.getStatus()
                         + "&detail=" + payment.getStatusDetail();
                 return ResponseEntity.ok(Map.of("redirectUrl", errorRedirectUrl));
@@ -124,8 +128,6 @@ public class SubscriptionController {
         } catch (MPException | MPApiException e) {
             return ResponseEntity.status(500).body(Map.of("error", "Erro ao processar pagamento com Mercado Pago: " + e.getMessage()));
         } catch (Exception e) {
-            // Logar o erro real no servidor é uma boa prática
-            // log.error("Erro interno inesperado", e);
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro inesperado. Tente novamente mais tarde."));
         }
     }

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Pagamento em Processamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <style>
+    /* Estilos básicos para garantir a aparência, caso o CSS principal não cubra */
+    body.auth-page {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        background-color: #f5f5f5;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .payment-container {
+        width: 100%;
+        max-width: 500px;
+        padding: 40px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
+    }
+    .payment-container h2 {
+        font-size: 1.8rem;
+        color: #333;
+        margin-bottom: 20px;
+    }
+    .payment-container p {
+        color: #555;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+    .btn-home {
+        display: inline-block;
+        padding: 12px 25px;
+        background-color: #009ee3;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: background-color 0.2s;
+    }
+  </style>
+</head>
+<body class="auth-page">
+
+<div class="payment-container">
+  <h2>Pagamento em Processamento ⏳</h2>
+  <p>
+    Recebemos seu apoio e ele já está em análise pelo nosso sistema de pagamentos.
+    Assim que for aprovado, seu acesso de apoiador será liberado automaticamente.
+    Você receberá uma notificação por e-mail com a confirmação.
+  </p>
+  <a th:href="@{/}" class="btn-home">Voltar para a Página Inicial</a>
+</div>
+
+</body>
+</html>
