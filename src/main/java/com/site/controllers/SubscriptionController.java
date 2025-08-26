@@ -87,37 +87,62 @@ public class SubscriptionController {
      */
     @PostMapping("/process-card-payment")
     public ResponseEntity<?> processCardPayment(
-            @RequestBody Map<String, String> payload,
+            @RequestBody Map<String, Object> payload,
             Authentication authentication) {
 
-        String token = payload.get("token");
-        BigDecimal valor = new BigDecimal(payload.get("valor"));
-        String descricao = payload.get("descricao");
-
-        // Validação do valor mínimo no backend
-        if (valor.compareTo(new BigDecimal("10.00")) < 0) {
-            return ResponseEntity.status(400).body(Map.of("error", "O valor do apoio deve ser de no mínimo R$ 10,00."));
-        }
-
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
-        if (optionalUsuario.isEmpty()) {
-            return ResponseEntity.status(500).body(Map.of("error", "Erro: Usuário não encontrado."));
-        }
-        Usuario usuario = optionalUsuario.get();
-
-        int planoDuracaoDias = 30; // Sempre 30 dias de acesso
-
         try {
-            Payment payment = mercadoPagoService.createCardPayment(token, usuario.getEmail(), usuario.getNome(), usuario.getCpf(), descricao, valor);
+            String token = payload.get("token").toString();
+            BigDecimal valor = new BigDecimal(payload.get("valor").toString());
+            String descricao = payload.get("descricao").toString();
+            Integer installments = Integer.parseInt(payload.get("installments").toString());
+            String paymentMethodId = payload.get("paymentMethodId").toString();
+
+            // issuerId é opcional - vamos ignorar por enquanto para simplificar
+            // Long issuerId = payload.containsKey("issuerId") && payload.get("issuerId") != null
+            //         ? Long.parseLong(payload.get("issuerId").toString())
+            //         : null;
+
+            // Validação do valor mínimo
+            if (valor.compareTo(new BigDecimal("10.00")) < 0) {
+                return ResponseEntity.status(400).body(Map.of("error", "Valor mínimo: R$ 10,00."));
+            }
+
+            Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
+            if (optionalUsuario.isEmpty()) {
+                return ResponseEntity.status(500).body(Map.of("error", "Usuário não encontrado."));
+            }
+            Usuario usuario = optionalUsuario.get();
+
+            int planoDuracaoDias = 30;
+
+            // Chama a versão sem issuerId
+            Payment payment = mercadoPagoService.createCardPayment(
+                    token,
+                    usuario.getEmail(),
+                    usuario.getNome(),
+                    usuario.getCpf(),
+                    descricao,
+                    valor,
+                    installments,
+                    paymentMethodId
+            );
 
             if ("approved".equals(payment.getStatus())) {
                 usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
                 return ResponseEntity.ok(Map.of("redirectUrl", "/apoiadores"));
             } else {
-                return ResponseEntity.ok(Map.of("redirectUrl", "/subscription?error=payment_refused"));
+                return ResponseEntity.ok(Map.of(
+                        "redirectUrl", "/subscription?error=payment_" + payment.getStatus(),
+                        "status", payment.getStatus(),
+                        "detail", payment.getStatusDetail()
+                ));
             }
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(400).body(Map.of("error", "Dados inválidos: " + e.getMessage()));
         } catch (MPException | MPApiException e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Erro ao processar pagamento: " + e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Erro Mercado Pago: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Erro interno: " + e.getMessage()));
         }
     }
 
