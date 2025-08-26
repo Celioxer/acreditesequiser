@@ -159,7 +159,6 @@
             expirationDate: { id: "form-checkout__expirationDate", placeholder: "MM/AA" },
             securityCode: { id: "form-checkout__securityCode", placeholder: "CVV" },
             installments: { id: "form-checkout__installments", placeholder: "Parcelas" },
-            // MUDANÇA AQUI: Adicionado o issuer
             issuer: { id: "form-checkout__issuer", placeholder: "Banco emissor" },
             cardholderName: { id: "form-checkout__cardholderName", placeholder: "Nome do Titular" },
             cardholderEmail: { id: "form-checkout__cardholderEmail", placeholder: "E-mail" },
@@ -171,8 +170,62 @@
                 if (error) return console.warn("Falha ao montar o formulário:", error);
                 console.log("Formulário montado com sucesso.");
             },
-            onSubmit: event => { /* Seu código de submit aqui... */ },
-            onError: (errors) => { /* Seu código de onError aqui... */ },
+            // ****** AQUI ESTÁ O CÓDIGO CORRETO E COMPLETO ******
+            onSubmit: event => {
+                event.preventDefault();
+                const submitButton = document.getElementById('form-checkout__submit');
+                submitButton.disabled = true;
+                document.getElementById('form-checkout').classList.add('loading');
+
+                const {
+                    paymentMethodId,
+                    token,
+                    installments,
+                    issuerId, // Captura o issuerId também
+                } = cardForm.getCardFormData();
+
+                fetch("/process-card-payment", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        token: token,
+                        paymentMethodId: paymentMethodId,
+                        installments: Number(installments),
+                        // issuerId: issuerId, // Descomente se seu backend precisar do issuer
+                        valor: valorPagamento.toString(),
+                        descricao: descricaoPagamento,
+                        payer: {
+                            email: document.getElementById('form-checkout__cardholderEmail').value,
+                            identification: {
+                                type: document.getElementById('form-checkout__identificationType').value,
+                                number: document.getElementById('form-checkout__identificationNumber').value
+                            }
+                        }
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.redirectUrl) {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        // Se não houver redirectUrl, assume que é um erro
+                        throw new Error(data.error || "Ocorreu um erro desconhecido no pagamento.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Erro ao processar pagamento:", error);
+                    alert("Erro: " + error.message);
+                    submitButton.disabled = false;
+                    document.getElementById('form-checkout').classList.remove('loading');
+                });
+            },
+            onError: (errors) => {
+                console.error("Erros de validação:", errors);
+                const errorMessages = errors.map(error => error.message).join('\n');
+                alert("Corrija os seguintes erros:\n" + errorMessages);
+            },
         },
     });
 </script>
