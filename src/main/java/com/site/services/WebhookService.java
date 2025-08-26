@@ -20,7 +20,7 @@ public class WebhookService {
 
     private final UsuarioRepository usuarioRepository;
     private final MercadoPagoService mercadoPagoService;
-    private final PaymentHistoryService paymentHistoryService; // tabela auxiliar para evitar duplicação
+    private final PaymentHistoryService paymentHistoryService;
 
     public WebhookService(UsuarioRepository usuarioRepository,
                           MercadoPagoService mercadoPagoService,
@@ -37,41 +37,41 @@ public class WebhookService {
     @Transactional
     public void processPaymentNotification(String paymentId) {
         try {
-            // Evita processar a mesma notificação duas vezes
             if (paymentHistoryService.existsByPaymentId(paymentId)) {
                 logger.info("Pagamento {} já processado, ignorando...", paymentId);
                 return;
             }
 
-            // Obtém os detalhes completos do pagamento
             Payment payment = mercadoPagoService.getPayment(paymentId);
 
             if (payment != null && "approved".equalsIgnoreCase(payment.getStatus())) {
 
-                // Pegamos o usuário pela external_reference, não pelo e-mail
                 String userIdRef = payment.getExternalReference();
-
                 Optional<Usuario> optionalUsuario = usuarioRepository.findById(Long.valueOf(userIdRef));
 
                 if (optionalUsuario.isPresent()) {
                     Usuario usuario = optionalUsuario.get();
+
+                    // ****** ALTERAÇÕES PRINCIPAIS AQUI ******
+
+                    // 1. Lógica de data ajustada para NÃO acumular dias.
+                    // A validade é sempre 30 dias a partir do dia do pagamento.
                     int planoDuracaoDias = 30;
-
-                    LocalDateTime currentValidDate = usuario.getAcessoValidoAte();
-                    LocalDateTime newValidDate;
-
-                    if (currentValidDate == null || currentValidDate.isBefore(LocalDateTime.now())) {
-                        newValidDate = LocalDateTime.now().plusDays(planoDuracaoDias);
-                    } else {
-                        newValidDate = currentValidDate.plusDays(planoDuracaoDias);
-                    }
-
+                    LocalDateTime newValidDate = LocalDateTime.now().plusDays(planoDuracaoDias);
                     usuario.setAcessoValidoAte(newValidDate);
+
+                    // 2. Adiciona a permissão de assinante para liberar o acesso.
+                    // Isso corrige o problema do usuário não conseguir acessar o conteúdo.
+                    usuario.setRole(Usuario.Role.SUBSCRIBER);
+
+                    // 3. Salva o usuário com a data e a permissão atualizadas.
                     usuarioRepository.save(usuario);
 
-                    paymentHistoryService.savePayment(paymentId, usuario.getId()); // marca como processado
+                    // *****************************************
 
-                    logger.info("Pagamento {} aprovado. Usuário {} atualizado até {}",
+                    paymentHistoryService.savePayment(paymentId, usuario.getId());
+
+                    logger.info("Pagamento {} aprovado. Usuário {} atualizado para SUBSCRIBER até {}",
                             paymentId, usuario.getEmail(), newValidDate);
                 } else {
                     logger.warn("Usuário não encontrado para external_reference {}", userIdRef);
