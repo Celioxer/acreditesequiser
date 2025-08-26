@@ -103,6 +103,7 @@
             <label for="form-checkout__cardNumber">Número do Cartão</label>
             <div id="form-checkout__cardNumber" class="input-mp"></div>
         </div>
+        <input type="hidden" name="deviceId" id="deviceId" />
         <div class="form-group">
             <label for="form-checkout__expirationDate">Data de Vencimento</label>
             <div id="form-checkout__expirationDate" class="input-mp"></div>
@@ -140,6 +141,20 @@
 </div>
 
 <script src="https://sdk.mercadopago.com/js/v2"></script>
+<script>
+    (function() {
+        var script = document.createElement("script");
+        script.src = "https://www.mercadopago.com/v2/security.js";
+        script.setAttribute("view", "checkout");
+        script.onload = function() {
+            var deviceId = window.MP_DEVICE_SESSION_ID;
+            if (deviceId) {
+                document.getElementById("deviceId").value = deviceId;
+            }
+        };
+        document.body.appendChild(script);
+    })();
+</script>
 <script th:inline="javascript">
     // Variáveis do Thymeleaf
     const valorPagamento = [[${valor}]];
@@ -172,39 +187,31 @@
             },
             // ****** AQUI ESTÁ O CÓDIGO CORRETO E COMPLETO ******
             onSubmit: event => {
-                event.preventDefault();
-                const submitButton = document.getElementById('form-checkout__submit');
-                submitButton.disabled = true;
-                document.getElementById('form-checkout').classList.add('loading');
+    event.preventDefault();
+    const submitButton = document.getElementById('form-checkout__submit');
+    submitButton.disabled = true;
+    document.getElementById('form-checkout').classList.add('loading');
 
-                const {
-                    paymentMethodId,
-                    token,
-                    installments,
-                    issuerId, // Captura o issuerId também
-                } = cardForm.getCardFormData();
+    const {
+        paymentMethodId,
+        token,
+        installments,
+        issuerId, // <-- Captura o issuerId aqui
+    } = cardForm.getCardFormData();
 
-                fetch("/process-card-payment", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        token: token,
-                        paymentMethodId: paymentMethodId,
-                        installments: Number(installments),
-                        // issuerId: issuerId, // Descomente se seu backend precisar do issuer
-                        valor: valorPagamento.toString(),
-                        descricao: descricaoPagamento,
-                        payer: {
-                            email: document.getElementById('form-checkout__cardholderEmail').value,
-                            identification: {
-                                type: document.getElementById('form-checkout__identificationType').value,
-                                number: document.getElementById('form-checkout__identificationNumber').value
-                            }
-                        }
-                    })
-                })
+    fetch("/process-card-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            token: token,
+            paymentMethodId: paymentMethodId,
+            installments: Number(installments),
+            issuerId: Number(issuerId), // <-- Envia o issuerId para o backend
+            valor: valorPagamento.toString(),
+            descricao: descricaoPagamento,
+            payer: { /* ... */ }
+        })
+    })
                 .then(response => response.json())
                 .then(data => {
                     if (data.redirectUrl) {

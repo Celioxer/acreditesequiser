@@ -102,12 +102,13 @@ public class SubscriptionController {
             Usuario usuario = optionalUsuario.get();
 
             Payment payment = mercadoPagoService.createCardPayment(
-                    usuario, // Passa o objeto de usuário completo
+                    usuario,
                     paymentRequest.getToken(),
                     paymentRequest.getDescricao(),
                     paymentRequest.getValor(),
                     paymentRequest.getInstallments(),
-                    paymentRequest.getPaymentMethodId()
+                    paymentRequest.getPaymentMethodId(),
+                    paymentRequest.getIssuerId() // <-- Passe o issuerId aqui
             );
 
             int planoDuracaoDias = 30;

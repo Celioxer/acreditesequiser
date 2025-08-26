@@ -10,6 +10,7 @@ public class PaymentRequestDTO {
     private BigDecimal valor;
     private String descricao;
     private PayerDTO payer;
+    private Integer issuerId;
 
     // É importante ter getters e setters para o Spring conseguir preencher os dados
     public String getToken() { return token; }
@@ -44,4 +45,6 @@ public class PaymentRequestDTO {
         public String getNumber() { return number; }
         public void setNumber(String number) { this.number = number; }
     }
+    public Integer getIssuerId() { return issuerId; }
+    public void setIssuerId(Integer issuerId) { this.issuerId = issuerId; }
 }
