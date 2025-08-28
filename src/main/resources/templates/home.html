@@ -25,6 +25,11 @@
             <p class="section-description">
                 Navegue por um acervo de episódios exclusivos, artigos detalhados e discussões aprofundadas sobre os temas mais intrigantes que desafiam a nossa realidade. Nosso conteúdo é preparado para curiosos e céticos, sempre buscando a verdade por trás dos maiores enigmas.
             </p>
+
+            <div class="action-buttons">
+                <a th:href="@{/login}" class="btn">Área de Inscritos</a>
+                <a href="#" class="btn btn-disabled" aria-disabled="true">Loja (em breve)</a>
+            </div>
         </div>
     </section>
 
@@ -63,5 +68,18 @@
 <script th:src="@{/js/home-destaques.js}"></script>
 
 <script th:src="@{/js/script.js}" defer></script>
+<div id="dev-popup-overlay" class="popup-hidden">
+    <div id="dev-popup">
+        <span id="close-popup">&times;</span>
+        <h3>Site desenvolvido por</h3>
+        <p class="dev-signature">
+            <a href="https://cahf.com.br" target="_blank" rel="noopener noreferrer">
+                &lt;/&gt; cahf
+            </a>
+        </p>
+        <p class="dev-message">Gostou da experiência neste site? Eu crio soluções web personalizadas. Visite meu portfólio para saber mais!</p>
+        <a href="https://cahf.com.br" target="_blank" rel="noopener noreferrer" class="btn-portfolio">Conhecer Trabalho</a>
+    </div>
+</div>
 </body>
 </html>

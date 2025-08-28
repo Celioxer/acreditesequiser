@@ -268,7 +268,7 @@ const episodiosBrutos = [
         { numero: '208', titulo: '208 - O Vídeo do Drone', descricao: 'Recentemente, em um canal do Youtube sobre drones, foi publicado um vídeo ,onde acidentalmente foram filmados alguns ovnis. E hoje vamos conversar com o Wanderley Wanzam, que foi o responsável por esse incrível registro.', capa: 'https://image-cdn-ak.spotifycdn.com/image/ab67656300005f1fdde11fabd56b12502efd5fbb', exclusivo: false },
         { numero: '209', titulo: '209 - Segredos da Maçonaria', descricao: 'Segundo a wikipédia, a maçonaria é uma sociedade secreta voltada ao aperfeiçoamento moral e espiritual de seus membros, promovendo valores como fraternidade, ética e filantropia por meio de rituais simbólicos e vestimentas representativas. Mas será só isso mesmo?', capa: 'https://image-cdn-ak.spotifycdn.com/image/ab67656300005f1f77bcf870b1189106d66740bd', exclusivo: false },
         { numero: '210', titulo: '210 - Operação Prato', descricao: 'Localizada no município de São Domingos do Capim, no nordeste do Pará, a Fazenda Jejú foi palco de um caso enigmático que mobilizou autoridades da Força Aérea Brasileira em dezembro de 1977, logo após o "suposto" fim da famosa operação prato.', capa: 'https://image-cdn-fa.spotifycdn.com/image/ab67656300005f1ff9669690fd10164471af2f99', exclusivo: false },
-        { numero: '211', titulo: '211 - Mortes Bizarras', descricao: 'ATENÇÃO - CONTEÚDO SENSÍVEL - ESSE EPISÓDIO PODE CAUSAR GATILHO EM ALGUMAS PESSOAS. A verdade é que ninguém quer morrer, apesar de sabermos que esse é nosso inexorável fim. Talvez por medo desse desfecho final, muitas pessoas sequer cogitam em pensar na morte, mas alguns casos de morte são tão estranhos que chega a ser difícil não pensar sobre eles.', capa: 'https://image-cdn-fa.spotifycdn.com/image/ab67656300005f1f7279220285db1473948b45bfI', exclusivo: false },
+        { numero: '211', titulo: '211 - Mortes Bizarras', descricao: 'ATENÇÃO - CONTEÚDO SENSÍVEL - ESSE EPISÓDIO PODE CAUSAR GATILHO EM ALGUMAS PESSOAS. A verdade é que ninguém quer morrer, apesar de sabermos que esse é nosso inexorável fim. Talvez por medo desse desfecho final, muitas pessoas sequer cogitam em pensar na morte, mas alguns casos de morte são tão estranhos que chega a ser difícil não pensar sobre eles.', capa: 'https://image-cdn-ak.spotifycdn.com/image/ab67656300005f1f7279220285db1473948b45bf', exclusivo: false },
         { numero: '212', titulo: '212 - Dogons', descricao: 'Na constelação do Cão Maior existe uma estrela, chamada Sirius B, e que segundo as antigas histórias contadas pelos dogons, os habitantes dessa estrela teriam aterrissado em nosso planeta e mantido contato com eles!', capa: 'https://image-cdn-ak.spotifycdn.com/image/ab67656300005f1f78d82931eb0d90234baa4eda', exclusivo: false },
         { numero: '213', titulo: '213 - Vampiros', descricao: 'Vampiros são figuras lendárias encontradas em várias culturas, geralmente descritas como criaturas que se alimentam do sangue de seres vivos, muitas vezes humanos, para sobreviver.. e nesse episódio vamos falar sobre essses seres na cultura pop!', capa: 'https://image-cdn-ak.spotifycdn.com/image/ab67656300005f1f559596e876b54fe9f513e176', exclusivo: false },
         { numero: '214', titulo: '214 - Investigação Militar', descricao: 'Nesse episódio vamos conversar com um militar que participou de pesquisas ufológicas chefiadas pelo exército Brasileiro !', capa: 'https://image-cdn-ak.spotifycdn.com/image/ab67656300005f1fa554b2091f85d3ea9eae2246', exclusivo: false },
@@ -353,13 +353,17 @@ const episodiosBrutos = [
 
 
             // =================================================================================
-            // PARTE 2: LÓGICA DA PÁGINA DE EPISÓDIOS (INTACTA)
+            // PARTE 2: LÓGICA DA PÁGINA DE EPISÓDIOS
             // =================================================================================
             document.addEventListener('DOMContentLoaded', function() {
 
+                // -----------------------------------------------------------------------------
+                // 1. SELEÇÃO DE ELEMENTOS (VARIÁVEIS)
+                // -----------------------------------------------------------------------------
                 const gridExclusivos = document.getElementById('grid-exclusivos');
                 const gridPublicos = document.getElementById('grid-publicos');
 
+                // Se os grids principais não existirem, o script para aqui.
                 if (!gridPublicos && !gridExclusivos) {
                     return;
                 }
@@ -370,101 +374,164 @@ const episodiosBrutos = [
                 const btnProximo = document.getElementById('proximo');
                 const infoPagina = document.getElementById('info-pagina');
 
+                // Elementos do novo filtro
+                const tipoFiltroRadios = document.querySelectorAll('input[name="tipoEpisodio"]');
+                const secaoExclusivos = gridExclusivos.closest('.secao-episodios');
+                const secaoPublicos = gridPublicos.closest('.secao-episodios');
+                const paginacaoContainer = document.querySelector('.paginacao');
+
+                // Variáveis de estado
                 let episodiosFiltrados = [...todosEpisodios];
                 let paginaAtual = 1;
                 const episodiosPorPagina = 12;
-                 function renderizarGrid(lista, elementoGrid) {
-                     if (!elementoGrid) return;
-                     elementoGrid.innerHTML = '';
-                     lista.forEach(ep => {
-                         const isExclusivo = ep.exclusivo;
-                         const cardClass = isExclusivo ? 'episodio-card exclusivo' : 'episodio-card';
-                         const badgeHTML = isExclusivo ? '<div class="card-badge">Exclusivo</div>' : '';
-                         const episodioCard = document.createElement('div');
-                         episodioCard.className = cardClass;
-                         episodioCard.innerHTML = `
-                             ${badgeHTML}
-                             <div class="card-image-container">
-                                 <img src="${ep.capa}" alt="Capa do Episódio ${ep.numero}" class="card-cover">
-                             </div>
-                             <div class="card-body">
-                                 <span class="ep-number">#${ep.numero}</span>
-                                 <h3 class="ep-title">${ep.titulo}</h3>
-                                 <p class="ep-description">${ep.descricao || 'Descrição não disponível.'}</p>
-                                 <div class="card-actions">
-                                     <button class="btn-card btn-play" data-audio-src="${ep.download}">
-                                         <i class="fas fa-play"></i> Ouvir
-                                     </button>
-                                     <a href="${ep.download}" class="btn-card btn-icon btn-download" download title="Fazer Download">
-                                         <i class="fas fa-download"></i>
-                                     </a>
-                                 </div>
-                                 <div class="card-player-wrapper"></div>
-                             </div>
-                         `;
-                         elementoGrid.appendChild(episodioCard);
-                     });
-                     adicionarEventListenersPlayer();
-                 }
 
-                 function adicionarEventListenersPlayer() {
-                     document.querySelectorAll('.btn-play').forEach(button => {
-                         button.addEventListener('click', tocarAudio);
-                     });
-                 }
+                // -----------------------------------------------------------------------------
+                // 2. DEFINIÇÃO DAS FUNÇÕES
+                // -----------------------------------------------------------------------------
 
-                 function tocarAudio(event) {
-                     const playButton = event.currentTarget;
-                     const cardBody = playButton.closest('.card-body');
-                     const actionsWrapper = cardBody.querySelector('.card-actions');
-                     const playerWrapper = cardBody.querySelector('.card-player-wrapper');
-                     const audioUrl = playButton.getAttribute('data-audio-src');
-                     document.querySelectorAll('.card-player-wrapper').forEach(wrapper => {
-                         if (wrapper !== playerWrapper && wrapper.innerHTML !== '') {
-                             wrapper.innerHTML = '';
-                             wrapper.closest('.card-body').querySelector('.card-actions').style.display = 'flex';
-                         }
-                     });
-                     actionsWrapper.style.display = 'none';
-                     playerWrapper.innerHTML = `
-                         <audio controls autoplay style="width:100%; height: 40px;">
-                             <source src="${audioUrl}" type="audio/mpeg">
-                             Seu navegador não suporta o elemento de áudio.
-                         </audio>
-                     `;
-                 }
+                function renderizarGrid(lista, elementoGrid) {
+                    if (!elementoGrid) return;
+                    elementoGrid.innerHTML = '';
+                    lista.forEach(ep => {
+                        const isExclusivo = ep.exclusivo;
+                        const cardClass = isExclusivo ? 'episodio-card exclusivo' : 'episodio-card';
+                        const badgeHTML = isExclusivo ? '<div class="card-badge">Exclusivo</div>' : '';
+                        const episodioCard = document.createElement('div');
+                        episodioCard.className = cardClass;
+                        episodioCard.innerHTML = `
+                            ${badgeHTML}
+                            <div class="card-image-container">
+                                <img src="${ep.capa}" alt="Capa do Episódio ${ep.numero}" class="card-cover">
+                            </div>
+                            <div class="card-body">
+                                <span class="ep-number">#${ep.numero}</span>
+                                <h3 class="ep-title">${ep.titulo}</h3>
+                                <p class="ep-description">${ep.descricao || 'Descrição não disponível.'}</p>
+                                <div class="card-actions">
+                                    <button class="btn-card btn-play" data-audio-src="${ep.download}">
+                                        <i class="fas fa-play"></i> Ouvir
+                                    </button>
+                                    <a href="${ep.download}" class="btn-card btn-icon btn-download" download title="Fazer Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                                <div class="card-player-wrapper"></div>
+                            </div>
+                        `;
+                        elementoGrid.appendChild(episodioCard);
+                    });
+                    adicionarEventListenersPlayer();
+                }
 
-                 function atualizarPagina() {
-                     const episodiosExclusivos = episodiosFiltrados.filter(ep => ep.exclusivo);
-                     const episodiosPublicos = episodiosFiltrados.filter(ep => !ep.exclusivo);
-                     const totalPaginas = Math.ceil(episodiosPublicos.length / episodiosPorPagina);
-                     paginaAtual = Math.max(1, Math.min(paginaAtual, totalPaginas || 1));
-                     const inicio = (paginaAtual - 1) * episodiosPorPagina;
-                     const fim = inicio + episodiosPorPagina;
-                     const publicosPaginados = episodiosPublicos.slice(inicio, fim);
-                     renderizarGrid(episodiosExclusivos, gridExclusivos);
-                     renderizarGrid(publicosPaginados, gridPublicos);
-                     if (contadorEpisodios) contadorEpisodios.textContent = `Mostrando ${episodiosFiltrados.length} de ${todosEpisodios.length} episódios encontrados`;
-                     if (infoPagina) infoPagina.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
-                     if (btnAnterior) btnAnterior.disabled = paginaAtual === 1;
-                     if (btnProximo) btnProximo.disabled = paginaAtual === (totalPaginas || 1);
-                 }
+                function adicionarEventListenersPlayer() {
+                    document.querySelectorAll('.btn-play').forEach(button => {
+                        button.addEventListener('click', tocarAudio);
+                    });
+                }
 
-                 function filtrarEpisodios() {
-                     const termo = buscaInput.value.toLowerCase();
-                     episodiosFiltrados = todosEpisodios.filter(ep =>
-                         ep.titulo.toLowerCase().includes(termo) || ep.numero.includes(termo)
-                     );
-                     paginaAtual = 1;
-                     atualizarPagina();
-                 }
+                function tocarAudio(event) {
+                    const playButton = event.currentTarget;
+                    const cardBody = playButton.closest('.card-body');
+                    const actionsWrapper = cardBody.querySelector('.card-actions');
+                    const playerWrapper = cardBody.querySelector('.card-player-wrapper');
+                    const audioUrl = playButton.getAttribute('data-audio-src');
 
-                 if (buscaInput) buscaInput.addEventListener('input', filtrarEpisodios);
-                 if (btnAnterior) btnAnterior.addEventListener('click', () => { if (paginaAtual > 1) { paginaAtual--; atualizarPagina(); } });
-                 if (btnProximo) btnProximo.addEventListener('click', () => {
-                     const totalPaginas = Math.ceil(episodiosFiltrados.filter(ep => !ep.exclusivo).length / episodiosPorPagina);
-                     if (paginaAtual < totalPaginas) { paginaAtual++; atualizarPagina(); }
-                 });
+                    // Para qualquer outro player que estiver tocando
+                    document.querySelectorAll('.card-player-wrapper').forEach(wrapper => {
+                        if (wrapper !== playerWrapper && wrapper.innerHTML !== '') {
+                            wrapper.innerHTML = '';
+                            wrapper.closest('.card-body').querySelector('.card-actions').style.display = 'flex';
+                        }
+                    });
 
-                 atualizarPagina();
-             });
+                    // Mostra o player no card atual
+                    actionsWrapper.style.display = 'none';
+                    playerWrapper.innerHTML = `
+                        <audio controls autoplay style="width:100%; height: 40px;">
+                            <source src="${audioUrl}" type="audio/mpeg">
+                            Seu navegador não suporta o elemento de áudio.
+                        </audio>
+                    `;
+                }
+
+                function filtrarEpisodios() {
+                    const termo = buscaInput.value.toLowerCase();
+                    const tipoSelecionado = document.querySelector('input[name="tipoEpisodio"]:checked').value;
+                    let episodiosBase = todosEpisodios;
+
+                    if (tipoSelecionado === 'publicos') {
+                        episodiosBase = todosEpisodios.filter(ep => !ep.exclusivo);
+                    } else if (tipoSelecionado === 'exclusivos') {
+                        episodiosBase = todosEpisodios.filter(ep => ep.exclusivo);
+                    }
+
+                    episodiosFiltrados = episodiosBase.filter(ep =>
+                        ep.titulo.toLowerCase().includes(termo) || ep.numero.includes(termo)
+                    );
+
+                    paginaAtual = 1;
+                    atualizarPagina();
+                }
+
+                function atualizarPagina() {
+                    const tipoSelecionado = document.querySelector('input[name="tipoEpisodio"]:checked').value;
+
+                    secaoExclusivos.style.display = (tipoSelecionado === 'publicos') ? 'none' : 'block';
+                    secaoPublicos.style.display = (tipoSelecionado === 'exclusivos') ? 'none' : 'block';
+                    paginacaoContainer.style.display = (tipoSelecionado === 'exclusivos') || episodiosFiltrados.filter(e=>!e.exclusivo).length <= episodiosPorPagina ? 'none' : 'flex';
+
+                    const episodiosExclusivos = episodiosFiltrados.filter(ep => ep.exclusivo);
+                    const episodiosPublicos = episodiosFiltrados.filter(ep => !ep.exclusivo);
+
+                    episodiosPublicos.reverse();
+
+                    const totalPaginas = Math.ceil(episodiosPublicos.length / episodiosPorPagina);
+                    paginaAtual = Math.max(1, Math.min(paginaAtual, totalPaginas || 1));
+                    const inicio = (paginaAtual - 1) * episodiosPorPagina;
+                    const fim = inicio + episodiosPorPagina;
+                    const publicosPaginados = episodiosPublicos.slice(inicio, fim);
+
+                    renderizarGrid(episodiosExclusivos, gridExclusivos);
+                    renderizarGrid(publicosPaginados, gridPublicos);
+
+                    if (contadorEpisodios) contadorEpisodios.textContent = `Mostrando ${episodiosFiltrados.length} de ${todosEpisodios.length} episódios encontrados`;
+                    if (infoPagina) infoPagina.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+                    if (btnAnterior) btnAnterior.disabled = paginaAtual === 1;
+                    if (btnProximo) btnProximo.disabled = paginaAtual === (totalPaginas || 1);
+                }
+
+                // -----------------------------------------------------------------------------
+                // 3. ADIÇÃO DOS EVENT LISTENERS
+                // -----------------------------------------------------------------------------
+                if (buscaInput) {
+                    buscaInput.addEventListener('input', filtrarEpisodios);
+                }
+
+                if (btnAnterior) {
+                    btnAnterior.addEventListener('click', () => {
+                        if (paginaAtual > 1) {
+                            paginaAtual--;
+                            atualizarPagina();
+                        }
+                    });
+                }
+
+                if (btnProximo) {
+                    btnProximo.addEventListener('click', () => {
+                        const totalPaginas = Math.ceil(episodiosFiltrados.filter(ep => !ep.exclusivo).length / episodiosPorPagina);
+                        if (paginaAtual < totalPaginas) {
+                            paginaAtual++;
+                            atualizarPagina();
+                        }
+                    });
+                }
+
+                tipoFiltroRadios.forEach(radio => {
+                    radio.addEventListener('change', filtrarEpisodios);
+                });
+
+                // -----------------------------------------------------------------------------
+                // 4. CHAMADA INICIAL PARA RENDERIZAR A PÁGINA
+                // -----------------------------------------------------------------------------
+                atualizarPagina();
+            });

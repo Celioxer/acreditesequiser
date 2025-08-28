@@ -47,3 +47,54 @@ if (document.getElementById('lista-episodios')) {
     // ... e assim por diante ...
 
 }
+// Lógica para o Pop-up de Divulgação
+document.addEventListener('DOMContentLoaded', () => {
+
+    const popupOverlay = document.getElementById('dev-popup-overlay');
+    const closeButton = document.getElementById('close-popup');
+
+    // Função para mostrar o pop-up
+    const showPopup = () => {
+        if (popupOverlay) {
+            popupOverlay.style.display = 'flex'; // Primeiro torna visível para a animação funcionar
+            setTimeout(() => {
+                popupOverlay.classList.remove('popup-hidden');
+            }, 20); // Pequeno delay para garantir que a transição CSS seja aplicada
+        }
+    };
+
+    // Função para esconder o pop-up
+    const hidePopup = () => {
+        if (popupOverlay) {
+            popupOverlay.classList.add('popup-hidden');
+             // Espera a animação terminar para remover o display flex
+            setTimeout(() => {
+                popupOverlay.style.display = 'none';
+            }, 300); // 300ms é a duração da transição no CSS
+        }
+    };
+
+    // Verifica se o pop-up já foi mostrado nesta sessão
+    if (!sessionStorage.getItem('devPopupShown')) {
+        // Mostra o pop-up após 4 segundos (4000 ms)
+        setTimeout(() => {
+            showPopup();
+            // Marca que o pop-up foi mostrado nesta sessão
+            sessionStorage.setItem('devPopupShown', 'true');
+        }, 4000);
+    }
+
+    // Event listener para o botão de fechar
+    if (closeButton) {
+        closeButton.addEventListener('click', hidePopup);
+    }
+
+    // Event listener para fechar clicando fora da caixa (no overlay)
+    if (popupOverlay) {
+        popupOverlay.addEventListener('click', (event) => {
+            if (event.target === popupOverlay) {
+                hidePopup();
+            }
+        });
+    }
+});

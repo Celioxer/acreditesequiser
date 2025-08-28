@@ -884,3 +884,162 @@ audio::-webkit-media-controls-timeline {
      /* Define uma proporção retangular (widescreen) em vez de quadrada (1/1) */
      aspect-ratio: 16 / 9;
  }
+ /* Estilos para o Pop-up de Divulgação */
+
+ #dev-popup-overlay {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.6);
+     z-index: 1000;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     opacity: 0;
+     visibility: hidden;
+     transition: opacity 0.3s ease, visibility 0.3s ease;
+ }
+
+ #dev-popup-overlay:not(.popup-hidden) {
+     opacity: 1;
+     visibility: visible;
+ }
+
+ #dev-popup {
+     background-color: #2c2c2c; /* Fundo escuro para combinar com o tema */
+     color: #f0f0f0;
+     padding: 25px 35px;
+     border-radius: 12px;
+     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+     width: 90%;
+     max-width: 420px;
+     text-align: center;
+     position: relative;
+     transform: scale(0.9);
+     transition: transform 0.3s ease-out;
+ }
+
+ #dev-popup-overlay:not(.popup-hidden) #dev-popup {
+     transform: scale(1);
+ }
+
+ #close-popup {
+     position: absolute;
+     top: 10px;
+     right: 15px;
+     font-size: 28px;
+     color: #888;
+     cursor: pointer;
+     transition: color 0.2s;
+ }
+
+ #close-popup:hover {
+     color: #fff;
+ }
+
+ #dev-popup h3 {
+     margin-top: 0;
+     margin-bottom: 10px;
+     font-weight: 300;
+     font-size: 1.2rem;
+     color: #aaa;
+ }
+
+ #dev-popup .dev-signature a {
+     font-size: 1.8rem;
+     font-weight: bold;
+     color: #00bfff; /* Um azul vibrante para destaque */
+     text-decoration: none;
+     transition: color 0.3s;
+ }
+
+ #dev-popup .dev-signature a:hover {
+     color: #ffffff;
+ }
+
+ #dev-popup .dev-message {
+     font-size: 1rem;
+     line-height: 1.5;
+     margin: 20px 0;
+     color: #ccc;
+ }
+
+ #dev-popup .btn-portfolio {
+     display: inline-block;
+     background-color: #00bfff;
+     color: #fff;
+     padding: 12px 25px;
+     border-radius: 5px;
+     text-decoration: none;
+     font-weight: bold;
+     transition: background-color 0.3s, transform 0.2s;
+ }
+
+ #dev-popup .btn-portfolio:hover {
+     background-color: #009acd;
+     transform: translateY(-2px);
+ }
+
+ /* Classe para esconder o popup */
+ .popup-hidden {
+     display: none;
+ }
+ /* Estilos para os botões de ação na seção 'sobre' */
+ .action-buttons {
+     margin-top: 30px; /* Espaçamento acima dos botões */
+     display: flex; /* Alinha os botões lado a lado */
+     justify-content: center; /* Centraliza os botões */
+     gap: 15px; /* Espaço entre os botões */
+     flex-wrap: wrap; /* Permite que os botões quebrem a linha em telas pequenas */
+ }
+
+ /* Estilo para o botão desativado */
+ .btn-disabled {
+     background-color: #555; /* Cor de fundo cinza */
+     color: #aaa; /* Cor do texto apagada */
+     cursor: not-allowed; /* Muda o cursor para indicar que não é clicável */
+     pointer-events: none; /* Desativa eventos de clique (opcional, mas recomendado) */
+ }
+
+ /* Remove efeitos de hover do botão desativado */
+ .btn-disabled:hover {
+     background-color: #555;
+     transform: none;
+ }
+ /* Estilos para o seletor de tipo de episódio */
+ .tipo-filtro {
+     display: flex;
+     justify-content: center;
+     gap: 20px; /* Espaço entre os botões */
+     margin-bottom: 20px;
+ }
+
+ .tipo-filtro label {
+     display: flex;
+     align-items: center;
+     gap: 8px; /* Espaço entre o botão e o texto */
+     padding: 8px 15px;
+     background-color: #333;
+     border-radius: 20px;
+     cursor: pointer;
+     transition: background-color 0.3s;
+     border: 1px solid #555;
+ }
+
+ .tipo-filtro label:hover {
+     background-color: #444;
+ }
+
+ /* Esconde o botão de rádio padrão */
+ .tipo-filtro input[type="radio"] {
+     display: none;
+ }
+
+ /* Estilo para a opção selecionada */
+ .tipo-filtro input[type="radio"]:checked + label {
+     background-color: #007bff; /* Cor de destaque do seu site */
+     color: #fff;
+     border-color: #0056b3;
+ }
