@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody; // <-- Importação necessária
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -83,27 +82,7 @@ public class SubscriptionController {
         return "auth/payment-pending";
     }
 
-    // ****** 1. NOVO MÉTODO PARA A PÁGINA DE "AGUARDE" PÓS-PAGAMENTO APROVADO ******
-    @GetMapping("/payment-success-processing")
-    public String showPaymentSuccessProcessingPage() {
-        return "auth/payment-success-processing";
-    }
-
-    // ****** 2. NOVO ENDPOINT DE API PARA VERIFICAR O STATUS DA ASSINATURA ******
-    @GetMapping("/api/subscription/status")
-    @ResponseBody
-    public Map<String, Boolean> getSubscriptionStatus(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return Map.of("active", false);
-        }
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
-        if (optionalUsuario.isPresent()) {
-            Usuario usuario = optionalUsuario.get();
-            boolean isActive = usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now());
-            return Map.of("active", isActive);
-        }
-        return Map.of("active", false);
-    }
+    // OS DOIS MÉTODOS DA PÁGINA DE "AGUARDE" FORAM REMOVIDOS DESTA VERSÃO
 
     @PostMapping("/process-card-payment")
     public ResponseEntity<?> processCardPayment(
@@ -131,15 +110,19 @@ public class SubscriptionController {
                     paymentRequest.getIssuerId()
             );
 
-            // ****** 3. LÓGICA DE REDIRECIONAMENTO AJUSTADA ******
+            // ****** LÓGICA RESTAURADA PARA A VERSÃO ANTERIOR ******
             if ("approved".equals(payment.getStatus())) {
-                // Redireciona para a página de "aguarde" para esperar o webhook
-                return ResponseEntity.ok(Map.of("redirectUrl", "/payment-success-processing"));
+                // A atualização do status volta a ser chamada diretamente aqui.
+                // Lembre-se que esta lógica pode não adicionar a ROLE de SUBSCRIBER.
+                // Verifique seu UsuarioService para garantir que ele faz isso.
+                int planoDuracaoDias = 30;
+                usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
+
+                // O redirecionamento volta a ser diretamente para a página de sucesso.
+                return ResponseEntity.ok(Map.of("redirectUrl", "/apoiadores"));
             } else if ("in_process".equals(payment.getStatus())) {
-                // Redireciona para a página de "pagamento pendente em análise"
                 return ResponseEntity.ok(Map.of("redirectUrl", "/payment-pending"));
             } else {
-                // Para pagamentos rejeitados, volta com a mensagem de erro
                 String errorRedirectUrl = "/subscription?error=payment_" + payment.getStatus()
                         + "&detail=" + payment.getStatusDetail();
                 return ResponseEntity.ok(Map.of("redirectUrl", errorRedirectUrl));

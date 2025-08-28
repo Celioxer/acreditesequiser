@@ -5,7 +5,11 @@ import com.site.dto.AdminUserViewDTO;
 import com.site.models.Usuario;
 import com.site.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -26,9 +30,20 @@ public class AdminService {
         return new AdminDashboardDTO(pagantesAtivos);
     }
 
-    public List<AdminUserViewDTO> getAllUsersForAdminPanel() {
-        return usuarioRepository.findAll().stream()
+    // NOVO MÉTODO PARA BUSCAR USUÁRIOS COM FILTRO E PESQUISA
+    public List<AdminUserViewDTO> findUsersFiltered(String status, String search) {
+        List<Usuario> allUsers = usuarioRepository.findAll();
+
+        // Filtra em memória
+        return allUsers.stream()
                 .map(this::convertToAdminUserViewDTO)
+                .filter(userDto -> {
+                    boolean statusMatch = status == null || status.isEmpty() || userDto.getStatus().equalsIgnoreCase(status.replace("_", " "));
+                    boolean searchMatch = search == null || search.isEmpty() ||
+                            userDto.getNome().toLowerCase().contains(search.toLowerCase()) ||
+                            userDto.getEmail().toLowerCase().contains(search.toLowerCase());
+                    return statusMatch && searchMatch;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -39,20 +54,16 @@ public class AdminService {
         usuarioRepository.save(usuario);
     }
 
-    public void addSubscriptionDays(Long userId, int daysToAdd) {
+    // NOVO MÉTODO PARA DEFINIR A DATA DE VENCIMENTO EXATA
+    @Transactional
+    public void setSubscriptionDate(Long userId, String newDateStr) {
         Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + userId));
 
-        LocalDateTime currentValidDate = usuario.getAcessoValidoAte();
-        LocalDateTime newValidDate;
+        LocalDate newDate = LocalDate.parse(newDateStr);
+        LocalDateTime newExpirationDateTime = newDate.atTime(LocalTime.MAX);
 
-        if (currentValidDate == null || currentValidDate.isBefore(LocalDateTime.now())) {
-            newValidDate = LocalDateTime.now().plusDays(daysToAdd);
-        } else {
-            newValidDate = currentValidDate.plusDays(daysToAdd);
-        }
-
-        usuario.setAcessoValidoAte(newValidDate);
+        usuario.setAcessoValidoAte(newExpirationDateTime);
 
         if (usuario.getRole() == Usuario.Role.USER) {
             usuario.setRole(Usuario.Role.SUBSCRIBER);
@@ -61,9 +72,11 @@ public class AdminService {
         usuarioRepository.save(usuario);
     }
 
+    // O método 'getAllUsersForAdminPanel' foi removido por ser substituído por 'findUsersFiltered'.
+    // O método 'addSubscriptionDays' foi removido por ser substituído por 'setSubscriptionDate'.
+
     /**
      * Sorteia um apoiador ativo aleatoriamente.
-     * @return Um DTO do usuário sorteado, ou um Optional vazio se não houver apoiadores ativos.
      */
     public Optional<AdminUserViewDTO> drawRandomActiveSubscriber() {
         List<Usuario> activeSubscribers = usuarioRepository.findByRoleAndAcessoValidoAteAfter(Usuario.Role.SUBSCRIBER, LocalDateTime.now());
@@ -80,28 +93,31 @@ public class AdminService {
 
     private AdminUserViewDTO convertToAdminUserViewDTO(Usuario usuario) {
         Long diasParaVencer = null;
-        String status = "";
+        String status = "NUNCA PAGOU";
 
-        if (usuario.getRole() == Usuario.Role.SUBSCRIBER) {
-            if (usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now())) {
-                diasParaVencer = ChronoUnit.DAYS.between(LocalDateTime.now(), usuario.getAcessoValidoAte());
-                status = "Ativo";
+        if (usuario.getAcessoValidoAte() != null) {
+            if (usuario.getAcessoValidoAte().isAfter(LocalDateTime.now())) {
+                diasParaVencer = ChronoUnit.DAYS.between(LocalDateTime.now(), usuario.getAcessoValidoAte()) + 1;
+                status = "ATIVO";
             } else {
-                status = "Vencido";
+                diasParaVencer = 0L;
+                status = "EXPIRADO";
             }
-        } else if (usuario.getRole() == Usuario.Role.USER) {
-            status = "Não Assinante";
-        } else if (usuario.getRole() == Usuario.Role.ADMIN) {
-            status = "Administrador";
+        }
+
+        if(usuario.getRole() == Usuario.Role.ADMIN) {
+            status = "ADMINISTRADOR";
         }
 
         return new AdminUserViewDTO(
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
+                usuario.getTelefone(),
                 usuario.getRole(),
-                diasParaVencer,
-                status
+                usuario.getAcessoValidoAte(),
+                status,
+                diasParaVencer
         );
     }
 }
