@@ -27,7 +27,9 @@ public class WebSecurityConfig {
                         .requestMatchers(
                                 "/", "/home", "/register/**", "/login",
                                 "/forgot-password", "/reset-password",
-                                "/css/**", "/js/**", "/img/**"
+                                "/css/**", "/js/**", "/img/**", "/termos-e-condicoes",
+                                "/politica-de-privacidade",
+                                "/politica-de-cookies"
                         ).permitAll()
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
                         .requestMatchers("/api/auth/qr/initiate", "/api/auth/qr/status/**").permitAll()

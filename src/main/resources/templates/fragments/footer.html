@@ -4,11 +4,21 @@
 <footer class="main-footer" th:fragment="footer">
     <div class="container">
         <p>© 2025 Acredite Se Quiser Podcast. Todos os direitos reservados.</p>
+
         <div class="social-links">
             <a href="https://www.instagram.com/acreditesequiserpodcast"><i class="fab fa-instagram"></i></a>
-            <a href="https://open.spotify.com/show/6pcUCnGJCBf8XFiJkjQcms"><i class="fab fa-spotify"></i></a>
+            <a href="https://open.spotify.com/show/2Bv01w3a9i9s4k4v4B6Y7E"><i class="fab fa-spotify"></i></a>
         </div>
-        <p>site desenvolvido por &lt;/&gt; <a href="https://cahf.com.br" target="_blank" rel="noopener noreferrer">cahf</a></p>
+
+        <div class="footer-legal-links" style="margin-top: 15px; font-size: 0.9em;">
+            <a th:href="@{/termos-e-condicoes}">Termos e Condições</a>
+            <span style="margin: 0 10px;">|</span>
+            <a th:href="@{/politica-de-privacidade}">Política de Privacidade</a>
+            <span style="margin: 0 10px;">|</span> <a th:href="@{/politica-de-cookies}">Política de Cookies</a>
+        </div>
+
+        <p style="margin-top: 15px;">site desenvolvido por &lt;/&gt; <a href="https://cahf.com.br" target="_blank" rel="noopener noreferrer">cahf</a></p>
+
     </div>
 </footer>
 </body>

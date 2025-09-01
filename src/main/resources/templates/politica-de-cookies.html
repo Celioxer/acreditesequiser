@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{fragments/head :: common_head('Política de Cookies')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main>
+    <section class="page-section">
+        <div class="container" style="text-align: left;">
+            <h1>Política de Cookies</h1>
+            <p><strong>Última atualização:</strong> 31 de agosto de 2025</p>
+
+            <h2>1. O que são Cookies?</h2>
+            <p>Cookies são pequenos arquivos de texto que um site armazena no seu computador ou dispositivo móvel quando você o visita. Eles são amplamente utilizados para fazer os sites funcionarem de forma mais eficiente, bem como para fornecer informações aos proprietários do site.</p>
+
+            <h2>2. Como Usamos os Cookies?</h2>
+            <p>Nosso site utiliza cookies para os seguintes fins:</p>
+            <ul>
+                <li><strong>Cookies Essenciais:</strong> São estritamente necessários para que você possa navegar pelo site e usar suas funcionalidades, como acessar áreas seguras (login de assinante). Sem esses cookies, os serviços que você solicitou não podem ser fornecidos.</li>
+                <li><strong>Cookies de Desempenho e Análise:</strong> Coletam informações sobre como os visitantes usam nosso site. Usamos esses dados para melhorar nosso site. Podemos usar ferramentas como o Google Analytics para isso.</li>
+                <li><strong>Cookies de Funcionalidade:</strong> Permitem que o site se lembre de escolhas que você faz (como seu nome de usuário) para fornecer uma experiência mais personalizada.</li>
+            </ul>
+
+            <h2>3. Como Controlar os Cookies?</h2>
+            <p>Você pode controlar e/ou deletar cookies como desejar através das configurações do seu navegador. Além disso, ao visitar nosso site, você pode gerenciar suas preferências de consentimento através do nosso banner de cookies.</p>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/script.js}" defer></script>
+<div id="dev-popup-overlay" class="popup-hidden">
+</div>
+
+</body>
+</html>

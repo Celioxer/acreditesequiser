@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{fragments/head :: common_head('Política de Privacidade')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main>
+    <section class="page-section">
+        <div class="container" style="text-align: left;">
+            <h1>Política de Privacidade</h1>
+            <p><strong>Última atualização:</strong> 31 de agosto de 2025</p>
+
+            <h2>1. Introdução</h2>
+            <p>Bem-vindo ao Acredite Se Quiser Podcast. A sua privacidade é de extrema importância para nós. Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e protegemos suas informações pessoais ao utilizar nosso site (acreditesequiserpodcast.com.br) e nossos serviços de assinatura.</p>
+
+            <h2>2. Informações que Coletamos</h2>
+            <p>Para fornecer nossos serviços, coletamos as seguintes informações pessoais durante o processo de cadastro e assinatura:</p>
+            <ul>
+                <li><strong>Nome Completo:</strong> Para identificação do usuário.</li>
+                <li><strong>Endereço de E-mail:</strong> Para comunicação, login, envio de confirmações e notificações importantes sobre sua conta.</li>
+                <li><strong>CPF (Cadastro de Pessoas Físicas):</strong> Para processamento de pagamentos e cumprimento de obrigações fiscais.</li>
+                <li><strong>Número de Telefone:</strong> Para contato e validação da conta, se necessário.</li>
+            </ul>
+
+            <h2>3. Como Usamos Suas Informações</h2>
+            <p>As informações coletadas são utilizadas exclusivamente para os seguintes fins:</p>
+            <ul>
+                <li><strong>Processamento de Pagamentos:</strong> Compartilhamos as informações necessárias (como nome, CPF e e-mail) com nosso parceiro de pagamentos, o <strong>Mercado Pago</strong>, para processar as transações de assinatura de forma segura.</li>
+                <li><strong>Gestão da Conta:</strong> Para criar e gerenciar sua conta de usuário, permitir o acesso às áreas restritas para assinantes e consolidar seu cadastro.</li>
+                <li><strong>Comunicação:</strong> Para enviar e-mails transacionais (confirmação de compra, recuperação de senha, avisos sobre a assinatura) e para prestar suporte ao cliente.</li>
+                <li><strong>Obrigações Legais:</strong> Para cumprir com obrigações legais e regulatórias vigentes no Brasil.</li>
+            </ul>
+            <p>Nós não vendemos, alugamos ou compartilhamos suas informações pessoais com terceiros para fins de marketing.</p>
+
+            <h2>4. Armazenamento e Segurança dos Dados</h2>
+            <p>Adotamos medidas de segurança técnicas e administrativas para proteger suas informações pessoais contra acesso não autorizado, perda ou alteração. Seus dados são armazenados em servidores seguros e o acesso é restrito.</p>
+
+            <h2>5. Seus Direitos (LGPD)</h2>
+            <p>De acordo com a Lei Geral de Proteção de Dados (LGPD), você tem o direito de acessar, corrigir, solicitar a eliminação ou a portabilidade de seus dados. Para exercer seus direitos, entre em contato conosco pelo email: celio@cahf.com.br.</p>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/script.js}" defer></script>
+<div id="dev-popup-overlay" class="popup-hidden">
+</div>
+
+</body>
+</html>
