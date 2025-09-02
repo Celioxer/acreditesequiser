@@ -346,6 +346,12 @@ const episodiosBrutos = [
                        titulo: '11 -  Exclusivo- Incidente em Varginha - Parte 5',
                        descricao: 'A continuação da saga sobre o mais famoso caso da ufologia brasileira.',
                        exclusivo: true
+                   },
+                   {
+                       numero: '12',
+                       titulo: '12 - Exclusivo - Os Discos de Dropa',
+                       descricao: 'Você já ouviu falar dos Dropas? Não? Então se prepara, porque essa história parece saída direto de um filme de ficção científica. Os misteriosos discos de pedra encontrados na região de Baian-Kara-Ula, na China, nos anos 1930, ainda hoje deixam muita gente de cabelo em pé. Dizem que são de origem extraterrestre,e que ninguém sabe exatamente onde estão agora.',
+                       exclusivo: true
                    }
                ];
 

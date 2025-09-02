@@ -29,7 +29,7 @@ public class WebSecurityConfig {
                                 "/forgot-password", "/reset-password",
                                 "/css/**", "/js/**", "/img/**", "/termos-e-condicoes",
                                 "/politica-de-privacidade",
-                                "/politica-de-cookies"
+                                "/politica-de-cookies","/sitemap.xml"
                         ).permitAll()
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
                         .requestMatchers("/api/auth/qr/initiate", "/api/auth/qr/status/**").permitAll()
