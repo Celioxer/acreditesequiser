@@ -94,6 +94,29 @@
         #draw-button { padding: 10px 20px; font-size: 1.2em; cursor: pointer; background-color: #3C8F9E; color: white; border: none; border-radius: 5px; }
         #draw-button:disabled { background-color: #555; cursor: not-allowed; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* CSS PARA O MODAL (POP-UP) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 27, 30, 0.8);
+            display: none; justify-content: center;
+            align-items: center; z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #1d2a2d; color: #D6C178; padding: 25px;
+            border-radius: 8px; width: 90%; max-width: 800px;
+            border: 1px solid #3d2c4b;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5); position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 10px; right: 20px; font-size: 28px;
+            font-weight: bold; cursor: pointer; color: #ccc;
+        }
+        .modal-close:hover { color: #fff; }
+        .history-table { width: 100%; margin-top: 15px; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 10px; border: 1px solid #3d2c4b; text-align: left;}
+        .history-table th { background-color: #0A1517; color: #BE93FD; }
     </style>
 </head>
 
@@ -138,6 +161,9 @@
                 <th>Telefone</th>
                 <th>Status</th>
                 <th>Vencimento</th>
+                <th>Último Valor</th>
+                <th>Método</th>
+                <th>Pgtos.</th>
                 <th>Gerenciar Assinatura</th>
                 <th>Papel (Role)</th>
                 <th>Ações</th>
@@ -160,6 +186,15 @@
     </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<div id="history-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeHistoryModal()">&times;</span>
+        <h3 id="history-modal-title">Histórico de Pagamentos</h3>
+        <div id="history-modal-body">
+        </div>
+    </div>
 </div>
 
 <script>
@@ -196,7 +231,7 @@
             tableBody.innerHTML = '';
 
             if (users.length === 0) {
-                 tableBody.innerHTML = '<tr><td colspan="9">Nenhum usuário encontrado.</td></tr>';
+                 tableBody.innerHTML = '<tr><td colspan="12">Nenhum usuário encontrado.</td></tr>';
                  return;
             }
 
@@ -212,6 +247,10 @@
                     `;
                 }
 
+                const ultimoValor = user.ultimoPagamentoValor ? `R$ ${user.ultimoPagamentoValor.toFixed(2).replace('.', ',')}` : 'N/A';
+                const ultimoMetodo = user.ultimoMetodoPagamento ? user.ultimoMetodoPagamento.toUpperCase() : 'N/A';
+                const totalPagamentos = user.totalPagamentos > 0 ? user.totalPagamentos : '0';
+
                 const row = `
                     <tr>
                         <td><b>${user.id}</b></td>
@@ -220,6 +259,9 @@
                         <td>${user.telefone || 'N/A'}</td>
                         <td><b>${user.status}</b></td>
                         <td>${vencimento}</td>
+                        <td>${ultimoValor}</td>
+                        <td>${ultimoMetodo}</td>
+                        <td>${totalPagamentos}</td>
                         <td>${subscriptionControls}</td>
                         <td>
                             <select id="role-select-${user.id}">
@@ -230,6 +272,7 @@
                         </td>
                         <td>
                             <button onclick="updateRole(${user.id})">Salvar Papel</button>
+                            <button onclick="showPaymentHistory(${user.id}, '${user.nome}')" style="margin-top: 5px;">Histórico</button>
                         </td>
                     </tr>
                 `;
@@ -238,7 +281,7 @@
         } catch (error) {
             console.error('Erro ao buscar usuários:', error);
             const tableBody = document.getElementById('user-table-body');
-            tableBody.innerHTML = `<tr><td colspan="9" style="color: red;">Falha ao carregar usuários.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="12" style="color: red;">Falha ao carregar usuários.</td></tr>`;
         }
     }
 
@@ -327,6 +370,68 @@
         }
     }
 
+    function closeHistoryModal() {
+        document.getElementById('history-modal').style.display = 'none';
+    }
+
+    async function showPaymentHistory(userId, userName) {
+        const modal = document.getElementById('history-modal');
+        const modalTitle = document.getElementById('history-modal-title');
+        const modalBody = document.getElementById('history-modal-body');
+
+        modalTitle.textContent = `Histórico de Pagamentos de: ${userName}`;
+        modalBody.innerHTML = '<p>Carregando histórico...</p>';
+        modal.style.display = 'flex';
+
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/payments`);
+            if (!response.ok) throw new Error('Falha ao buscar o histórico.');
+
+            const payments = await response.json();
+
+            if (payments.length === 0) {
+                modalBody.innerHTML = '<p>Nenhum pagamento encontrado para este usuário.</p>';
+                return;
+            }
+
+            let tableHtml = `
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Valor</th>
+                            <th>Método</th>
+                            <th>Parcelas</th>
+                            <th>ID da Transação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            payments.forEach(p => {
+                const paymentDate = new Date(p.paymentDate).toLocaleString('pt-BR');
+                const amount = `R$ ${p.amount.toFixed(2).replace('.', ',')}`;
+                const installments = p.installments || '1';
+
+                tableHtml += `
+                    <tr>
+                        <td>${paymentDate}</td>
+                        <td>${amount}</td>
+                        <td>${p.paymentMethodId}</td>
+                        <td>${installments}</td>
+                        <td>${p.paymentId}</td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += '</tbody></table>';
+            modalBody.innerHTML = tableHtml;
+
+        } catch (error) {
+            console.error('Erro ao buscar histórico:', error);
+            modalBody.innerHTML = '<p style="color: red;">Não foi possível carregar o histórico.</p>';
+        }
+    }
 </script>
 </body>
 </html>

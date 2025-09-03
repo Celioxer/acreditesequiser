@@ -110,16 +110,14 @@ public class SubscriptionController {
                     paymentRequest.getIssuerId()
             );
 
-            // ****** LÓGICA RESTAURADA PARA A VERSÃO ANTERIOR ******
+            // ****** LÓGICA RESTAURADA  ******
             if ("approved".equals(payment.getStatus())) {
-                // A atualização do status volta a ser chamada diretamente aqui.
-                // Lembre-se que esta lógica pode não adicionar a ROLE de SUBSCRIBER.
-                // Verifique seu UsuarioService para garantir que ele faz isso.
+                // A atualização do status volta a ser chamada.
                 int planoDuracaoDias = 30;
                 usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
 
                 // O redirecionamento volta a ser diretamente para a página de sucesso.
-                return ResponseEntity.ok(Map.of("redirectUrl", "/apoiadores"));
+                return ResponseEntity.ok(Map.of("redirectUrl", "/logout"));
             } else if ("in_process".equals(payment.getStatus())) {
                 return ResponseEntity.ok(Map.of("redirectUrl", "/payment-pending"));
             } else {

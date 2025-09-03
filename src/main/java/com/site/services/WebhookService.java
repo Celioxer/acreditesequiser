@@ -69,7 +69,16 @@ public class WebhookService {
 
                     // *****************************************
 
-                    paymentHistoryService.savePayment(paymentId, usuario.getId());
+                    paymentHistoryService.savePayment(
+                            paymentId,
+                            usuario.getId(),
+                            payment.getTransactionAmount(),
+                            payment.getDateApproved().toLocalDateTime(),
+                            payment.getPaymentMethodId(),
+                            payment.getStatus(),
+                            payment.getStatusDetail(),
+                            payment.getInstallments()
+                    );
 
                     logger.info("Pagamento {} aprovado. Usuário {} atualizado para SUBSCRIBER até {}",
                             paymentId, usuario.getEmail(), newValidDate);

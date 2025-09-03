@@ -1,9 +1,11 @@
 package com.site.dto;
 
 import com.site.models.Usuario;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class AdminUserViewDTO {
+    // Campos existentes
     private Long id;
     private String nome;
     private String email;
@@ -13,7 +15,16 @@ public class AdminUserViewDTO {
     private String status;
     private Long diasParaVencer;
 
-    public AdminUserViewDTO(Long id, String nome, String email, String telefone, Usuario.Role role, LocalDateTime acessoValidoAte, String status, Long diasParaVencer) {
+    // ****** NOVOS CAMPOS ESSENCIAIS ADICIONADOS ******
+    private BigDecimal ultimoPagamentoValor;
+    private String ultimoMetodoPagamento;
+    private Long totalPagamentos;
+    // ***********************************************
+
+    // Construtor atualizado para receber TUDO
+    public AdminUserViewDTO(Long id, String nome, String email, String telefone, Usuario.Role role,
+                            LocalDateTime acessoValidoAte, String status, Long diasParaVencer,
+                            BigDecimal ultimoPagamentoValor, String ultimoMetodoPagamento, Long totalPagamentos) { // Adicionados aqui
         this.id = id;
         this.nome = nome;
         this.email = email;
@@ -22,8 +33,15 @@ public class AdminUserViewDTO {
         this.acessoValidoAte = acessoValidoAte;
         this.status = status;
         this.diasParaVencer = diasParaVencer;
+        this.ultimoPagamentoValor = ultimoPagamentoValor; // Adicionado aqui
+        this.ultimoMetodoPagamento = ultimoMetodoPagamento; // Adicionado aqui
+        this.totalPagamentos = totalPagamentos; // Adicionado aqui
     }
 
+    // ****** GETTERS PARA OS NOVOS CAMPOS ******
+    public BigDecimal getUltimoPagamentoValor() { return ultimoPagamentoValor; }
+    public String getUltimoMetodoPagamento() { return ultimoMetodoPagamento; }
+    public Long getTotalPagamentos() { return totalPagamentos; }
     // --- GETTERS E SETTERS ---
 
     public Long getId() {

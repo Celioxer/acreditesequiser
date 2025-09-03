@@ -2,11 +2,15 @@ package com.site.services;
 
 import com.site.dto.AdminDashboardDTO;
 import com.site.dto.AdminUserViewDTO;
+import com.site.dto.PaymentHistoryDTO;
+import com.site.models.PaymentHistory;
 import com.site.models.Usuario;
+import com.site.repositories.PaymentHistoryRepository;
 import com.site.repositories.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,9 +24,11 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
 
-    public AdminService(UsuarioRepository usuarioRepository) {
+    public AdminService(UsuarioRepository usuarioRepository, PaymentHistoryRepository paymentHistoryRepository) {
         this.usuarioRepository = usuarioRepository;
+        this.paymentHistoryRepository = paymentHistoryRepository;
     }
 
     public AdminDashboardDTO getDashboardData() {
@@ -30,11 +36,9 @@ public class AdminService {
         return new AdminDashboardDTO(pagantesAtivos);
     }
 
-    // NOVO MÉTODO PARA BUSCAR USUÁRIOS COM FILTRO E PESQUISA
     public List<AdminUserViewDTO> findUsersFiltered(String status, String search) {
         List<Usuario> allUsers = usuarioRepository.findAll();
 
-        // Filtra em memória
         return allUsers.stream()
                 .map(this::convertToAdminUserViewDTO)
                 .filter(userDto -> {
@@ -47,6 +51,19 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
+    public List<PaymentHistoryDTO> getPaymentHistoryForUser(Long userId) {
+        // Esta linha agora vai funcionar porque o método existe no repositório
+        List<PaymentHistory> history = paymentHistoryRepository.findByUsuarioIdOrderByPaymentDateDesc(userId);
+        return history.stream()
+                .map(p -> new PaymentHistoryDTO(
+                        p.getPaymentId(),
+                        p.getAmount(),
+                        p.getPaymentDate(),
+                        p.getPaymentMethodId(),
+                        p.getInstallments()))
+                .collect(Collectors.toList());
+    }
+
     public void updateUserRole(Long userId, Usuario.Role newRole) {
         Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -54,7 +71,6 @@ public class AdminService {
         usuarioRepository.save(usuario);
     }
 
-    // NOVO MÉTODO PARA DEFINIR A DATA DE VENCIMENTO EXATA
     @Transactional
     public void setSubscriptionDate(Long userId, String newDateStr) {
         Usuario usuario = usuarioRepository.findById(userId)
@@ -72,12 +88,6 @@ public class AdminService {
         usuarioRepository.save(usuario);
     }
 
-    // O método 'getAllUsersForAdminPanel' foi removido por ser substituído por 'findUsersFiltered'.
-    // O método 'addSubscriptionDays' foi removido por ser substituído por 'setSubscriptionDate'.
-
-    /**
-     * Sorteia um apoiador ativo aleatoriamente.
-     */
     public Optional<AdminUserViewDTO> drawRandomActiveSubscriber() {
         List<Usuario> activeSubscribers = usuarioRepository.findByRoleAndAcessoValidoAteAfter(Usuario.Role.SUBSCRIBER, LocalDateTime.now());
 
@@ -109,6 +119,11 @@ public class AdminService {
             status = "ADMINISTRADOR";
         }
 
+        Optional<PaymentHistory> ultimoPagamentoOpt = paymentHistoryRepository.findTopByUsuarioIdOrderByPaymentDateDesc(usuario.getId());
+        BigDecimal ultimoPagamentoValor = ultimoPagamentoOpt.map(PaymentHistory::getAmount).orElse(null);
+        String ultimoMetodoPagamento = ultimoPagamentoOpt.map(PaymentHistory::getPaymentMethodId).orElse(null);
+        long totalPagamentos = paymentHistoryRepository.countByUsuarioId(usuario.getId());
+
         return new AdminUserViewDTO(
                 usuario.getId(),
                 usuario.getNome(),
@@ -117,7 +132,10 @@ public class AdminService {
                 usuario.getRole(),
                 usuario.getAcessoValidoAte(),
                 status,
-                diasParaVencer
+                diasParaVencer,
+                ultimoPagamentoValor,
+                ultimoMetodoPagamento,
+                totalPagamentos
         );
     }
 }

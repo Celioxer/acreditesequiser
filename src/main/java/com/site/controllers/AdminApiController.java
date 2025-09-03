@@ -2,6 +2,7 @@ package com.site.controllers;
 
 import com.site.dto.AdminDashboardDTO;
 import com.site.dto.AdminUserViewDTO;
+import com.site.dto.PaymentHistoryDTO;
 import com.site.models.Usuario;
 import com.site.services.AdminService;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,12 @@ public class AdminApiController {
         // Agora chamamos um novo método no serviço que sabe como filtrar os dados
         List<AdminUserViewDTO> users = adminService.findUsersFiltered(status, search);
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/users/{userId}/payments")
+    public ResponseEntity<List<PaymentHistoryDTO>> getPaymentHistory(@PathVariable Long userId) {
+        List<PaymentHistoryDTO> history = adminService.getPaymentHistoryForUser(userId);
+        return ResponseEntity.ok(history);
     }
 
     @PostMapping("/users/{userId}/role")
