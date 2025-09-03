@@ -21,7 +21,7 @@ public class EmailService {
     public void sendPasswordResetEmail(String to, String token) {
         String resetUrl = "http://localhost:8080/reset-password?token=" + token;
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("phcarvalho76@gmail.com");
+        message.setFrom("acreditesequiserpodcast@gmail.com");
         message.setTo(to);
         message.setSubject("Redefinição de Senha - Acredite Se Quiser");
         message.setText("Para redefinir sua senha, clique no link abaixo:\n" + resetUrl
@@ -31,7 +31,7 @@ public class EmailService {
 
     public void sendSubscriptionReminderEmail(Usuario usuario) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("phcarvalho76@gmail.com");
+        message.setFrom("acreditesequiserpodcast@gmail.com");
         message.setTo(usuario.getEmail());
         message.setSubject("Lembrete: Sua assinatura está prestes a vencer!");
 
@@ -39,7 +39,7 @@ public class EmailService {
 
         message.setText("Olá, " + usuario.getNome() + "!\n\n"
                 + "Sua assinatura de apoiador do Acredite Se Quiser está programada para vencer no dia " + expiryDate + ".\n\n"
-                + "Para garantir que você não perca o acesso ao conteúdo exclusivo e ao nosso grupo, renove seu apoio em nosso site.\n\n"
+                + "Para garantir que você não perca o acesso ao conteúdo exclusivo e ao nosso grupo, renove sua assinatura em nosso site.\n\n"
                 + "Agradecemos por fazer parte da nossa comunidade!\n\n"
                 + "Atenciosamente,\nEquipe Acredite Se Quiser");
 
@@ -48,10 +48,10 @@ public class EmailService {
 
     public void sendNewSubscriberNotification(String adminEmail, String newSubscriberEmail) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("phcarvalho76@gmail.com");
+        message.setFrom("acreditesequiserpodcast@gmail.com");
         message.setTo(adminEmail);
         message.setSubject("🎉 Novo Assinante na Plataforma!");
-        message.setText("Olá! Um novo usuário se tornou assinante.\n\nE-mail do novo apoiador: " + newSubscriberEmail);
+        message.setText("Olá! Um novo usuário se tornou assinante.\n\nE-mail do novo Membro: " + newSubscriberEmail);
         mailSender.send(message);
     }
 
@@ -59,7 +59,7 @@ public class EmailService {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setFrom("phcarvalho76@gmail.com");
+            helper.setFrom("acreditesequiserpodcast@gmail.com");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
@@ -71,7 +71,7 @@ public class EmailService {
 
     public void sendCustomEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("phcarvalho76@gmail.com");
+        message.setFrom("acreditesequiserpodcast@gmail.com");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
