@@ -1,6 +1,7 @@
 package com.site.controllers;
 
 import com.site.dto.AdminDashboardDTO;
+import com.site.dto.AdminEmailRequestDTO;
 import com.site.dto.AdminUserViewDTO;
 import com.site.dto.PaymentHistoryDTO;
 import com.site.models.Usuario;
@@ -27,13 +28,11 @@ public class AdminApiController {
         return ResponseEntity.ok(adminService.getDashboardData());
     }
 
-    // ****** MÉTODO ATUALIZADO PARA ACEITAR FILTROS E PESQUISA ******
     @GetMapping("/users")
     public ResponseEntity<List<AdminUserViewDTO>> getAllUsers(
             @RequestParam(value = "status", required = false, defaultValue = "") String status,
             @RequestParam(value = "search", required = false, defaultValue = "") String search
     ) {
-        // Agora chamamos um novo método no serviço que sabe como filtrar os dados
         List<AdminUserViewDTO> users = adminService.findUsersFiltered(status, search);
         return ResponseEntity.ok(users);
     }
@@ -46,16 +45,11 @@ public class AdminApiController {
 
     @PostMapping("/users/{userId}/role")
     public ResponseEntity<Void> updateUserRole(@PathVariable Long userId, @RequestBody Map<String, String> body) {
-        // Este método foi mantido como estava, pois já está correto.
         Usuario.Role newRole = Usuario.Role.valueOf(body.get("role"));
         adminService.updateUserRole(userId, newRole);
         return ResponseEntity.ok().build();
     }
 
-    // ****** MÉTODO ANTIGO REMOVIDO E SUBSTITUÍDO PELO NOVO ABAIXO ******
-    // O antigo @PostMapping("/users/{userId}/subscription") foi removido.
-
-    // ****** NOVO MÉTODO PARA DEFINIR A DATA DE VENCIMENTO ******
     @PostMapping("/users/{userId}/subscription/set-date")
     public ResponseEntity<Void> setSubscriptionDate(
             @PathVariable Long userId,
@@ -71,10 +65,20 @@ public class AdminApiController {
 
     @GetMapping("/raffle/draw")
     public ResponseEntity<AdminUserViewDTO> drawWinner() {
-        // Este método foi mantido como estava, pois já está correto.
         Optional<AdminUserViewDTO> winnerOptional = adminService.drawRandomActiveSubscriber();
         return winnerOptional
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // <<< MÉTODO MOVIDO PARA DENTRO DA CLASSE >>>
+    @PostMapping("/send-email")
+    public ResponseEntity<Void> sendEmailToUsers(@RequestBody AdminEmailRequestDTO emailRequest) {
+        adminService.sendEmailToSelectedUsers(
+                emailRequest.getUserIds(),
+                emailRequest.getSubject(),
+                emailRequest.getBody()
+        );
+        return ResponseEntity.ok().build();
     }
 }

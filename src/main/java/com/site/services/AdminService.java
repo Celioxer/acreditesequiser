@@ -2,33 +2,46 @@ package com.site.services;
 
 import com.site.dto.AdminDashboardDTO;
 import com.site.dto.AdminUserViewDTO;
-import com.site.dto.PaymentHistoryDTO;
-import com.site.models.PaymentHistory;
 import com.site.models.Usuario;
-import com.site.repositories.PaymentHistoryRepository;
 import com.site.repositories.UsuarioRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
+import com.site.models.PaymentHistory;
+import com.site.repositories.PaymentHistoryRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.site.dto.PaymentHistoryDTO;
+
 
 @Service
 public class AdminService {
 
     private final UsuarioRepository usuarioRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final EmailService emailService; // SERVIÇO DE E-MAIL
 
-    public AdminService(UsuarioRepository usuarioRepository, PaymentHistoryRepository paymentHistoryRepository) {
+    // Construtor atualizado para receber o EmailService
+    public AdminService(UsuarioRepository usuarioRepository,
+                        PaymentHistoryRepository paymentHistoryRepository,
+                        EmailService emailService) { //  CONSTRUTOR
         this.usuarioRepository = usuarioRepository;
         this.paymentHistoryRepository = paymentHistoryRepository;
+        this.emailService = emailService; // INICIALIZE
+    }
+
+    // Agora este método vai funcionar, pois o 'emailService' existe na classe.
+    public void sendEmailToSelectedUsers(List<Long> userIds, String subject, String body) {
+        List<Usuario> users = usuarioRepository.findAllById(userIds);
+        for (Usuario user : users) {
+            emailService.sendCustomEmail(user.getEmail(), subject, body);
+        }
     }
 
     public AdminDashboardDTO getDashboardData() {
@@ -52,7 +65,6 @@ public class AdminService {
     }
 
     public List<PaymentHistoryDTO> getPaymentHistoryForUser(Long userId) {
-        // Esta linha agora vai funcionar porque o método existe no repositório
         List<PaymentHistory> history = paymentHistoryRepository.findByUsuarioIdOrderByPaymentDateDesc(userId);
         return history.stream()
                 .map(p -> new PaymentHistoryDTO(

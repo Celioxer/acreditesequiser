@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.List;
 
+
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByEmail(String email);
@@ -20,4 +21,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // <<< MÉTODO NOVO PARA A REDEFINIÇÃO DE SENHA >>>
     Optional<Usuario> findByPasswordResetToken(String token);
+    // <<< Serviço de email para usuarios vencidos >>>
+    List<Usuario> findByAcessoValidoAteBetween(LocalDateTime start, LocalDateTime end);
 }
