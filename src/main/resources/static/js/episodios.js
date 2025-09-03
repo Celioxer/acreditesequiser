@@ -488,7 +488,7 @@ const episodiosBrutos = [
 
                     const episodiosExclusivos = episodiosFiltrados.filter(ep => ep.exclusivo);
                     const episodiosPublicos = episodiosFiltrados.filter(ep => !ep.exclusivo);
-
+                    episodiosExclusivos.reverse();
                     episodiosPublicos.reverse();
 
                     const totalPaginas = Math.ceil(episodiosPublicos.length / episodiosPorPagina);
