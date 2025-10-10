@@ -1,6 +1,6 @@
 package com.site.repositories;
-
 import com.site.models.Usuario;
+import com.site.models.Usuario.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -23,4 +23,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByPasswordResetToken(String token);
     // <<< Serviço de email para usuarios vencidos >>>
     List<Usuario> findByAcessoValidoAteBetween(LocalDateTime start, LocalDateTime end);
+    List<Usuario> findByRoleAndAcessoValidoAteBefore(Role role, LocalDateTime dataLimite);
 }

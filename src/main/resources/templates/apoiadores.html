@@ -22,19 +22,45 @@
             </p>
 
             <div class="subscription-validity">
-                <p>
-                    Lembre-se: o acesso aos benefícios, como o grupo de WhatsApp e os episódios exclusivos, é válido enquanto sua assinatura estiver ativa.
-                </p>
+                <div th:if="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null}">
+                    <th:block th:with="diasParaVencimento=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), T(java.time.LocalDate).from(usuario.acessoValidoAte))}">
 
-                <p th:if="${usuario.role.name() == 'ADMIN'}" class="validity-date">
-                    <strong>Seu acesso como Administrador é permanente.</strong>
-                </p>
+                        <div th:if="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null}">
+                            <th:block th:with="diasParaVencimento=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), T(java.time.LocalDate).from(usuario.acessoValidoAte))}">
 
-                <p th:if="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null}" class="validity-date">
-                    <strong>Sua assinatura é válida até:
-                        <span th:text="${#temporals.format(usuario.acessoValidoAte, 'dd/MM/yyyy')}">31/12/2025</span>
-                    </strong>
-                </p>
+                                <div th:if="${diasParaVencimento <= 10 and diasParaVencimento >= 0 or diasParaVencimento < 0}" class="renewal-cta-container">
+                                    <hr class="welcome-divider">
+                                    <p th:if="${diasParaVencimento >= 0}" class="text-danger font-weight-bold">
+                                        🚨 Seu acesso vence em <span th:text="${diasParaVencimento}">X</span> dias! Renove agora e garanta a continuidade.
+                                    </p>
+                                    <p th:if="${diasParaVencimento < 0}" class="text-danger font-weight-bold">
+                                        🚫 Seu acesso **venceu há <span th:text="${-diasParaVencimento}">X</span> dias!** Pague agora para reativar.
+                                    </p>
+
+                                    <form th:action="@{/assinatura/renovar}" method="GET" class="mt-3">
+                                        <div class="form-group">
+                                            <label for="valorRenovacao">Escolha o valor do seu apoio (mínimo R$ 10,00):</label>
+                                            <input type="number" step="0.01" min="10.00" class="form-control" id="valorRenovacao" name="valor" value="10.00" required>
+                                        </div>
+
+                                        <p class="mt-3">Escolha o método de pagamento:</p>
+                                        <div class="btn-group btn-block" role="group" aria-label="Método de Pagamento">
+                                            <button type="submit" name="paymentMethod" value="pix" class="btn btn-warning">
+                                                <i class="fas fa-qrcode"></i> Renovar com PIX
+                                            </button>
+                                            <button type="submit" name="paymentMethod" value="card" class="btn btn-primary">
+                                                <i class="fas fa-credit-card"></i> Renovar com Cartão
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </th:block>
+                        </div>
+
+
+
+                    </th:block>
+                </div>
             </div>
             <hr class="welcome-divider">
 

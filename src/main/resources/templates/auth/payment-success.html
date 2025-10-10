@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: common_head('Pagamento Aprovado!')}"></head>
+
+<body>
+<div class="sticky-footer-layout">
+  <div th:replace="~{fragments/header :: header}"></div>
+
+  <main class="container my-5 text-center">
+    <div class="alert alert-success" role="alert">
+      <h4 class="alert-heading">🎉 Pagamento Aprovado!</h4>
+      <p>Obrigado pelo seu apoio! Sua assinatura foi renovada com sucesso.</p>
+      <hr>
+      <p class="mb-0">Para que suas novas permissões de acesso entrem em vigor, faremos o logout em <span id="countdown">5</span> segundos.</p>
+      <p class="font-weight-bold">Você precisará fazer login novamente.</p>
+    </div>
+  </main>
+
+  <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+
+<script>
+  let count = 5;
+  const countdownElement = document.getElementById('countdown');
+
+  function startLogoutTimer() {
+      countdownElement.textContent = count;
+
+      if (count === 0) {
+          // Redireciona para o endpoint de logout do Spring Security
+          window.location.href = "/logout";
+      } else {
+          count--;
+          setTimeout(startLogoutTimer, 1000); // Chama novamente após 1 segundo
+      }
+  }
+
+  // Inicia o contador quando a página carregar
+  window.onload = startLogoutTimer;
+</script>
+</body>
+</html>
