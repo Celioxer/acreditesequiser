@@ -25,12 +25,14 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Regras para acesso público (sem login)
                         .requestMatchers(
+                                "/error", // ✅ GARANTINDO QUE A PÁGINA DE ERRO É SEMPRE PÚBLICA
                                 "/", "/home", "/register/**", "/login",
                                 "/forgot-password", "/reset-password",
                                 "/css/**", "/js/**", "/img/**", "/termos-e-condicoes",
                                 "/politica-de-privacidade",
                                 "/politica-de-cookies","/sitemap.xml",
                                 "/ads.txt"
+
                         ).permitAll()
                         .requestMatchers("/api/mercadopago/webhook").permitAll()
                         .requestMatchers("/api/auth/qr/initiate", "/api/auth/qr/status/**").permitAll()
@@ -39,7 +41,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/subscription", "/checkout", "/process-card-payment").hasAnyAuthority("ROLE_USER", "ROLE_SUBSCRIBER", "ROLE_ADMIN")
 
                         // 3. Regras para conteúdo restrito (assinantes ou admins)
-                        .requestMatchers("/apoiadores", "/episodios", "/conteudo-protegido").hasAnyAuthority("ROLE_SUBSCRIBER", "ROLE_ADMIN")
+                        .requestMatchers("/episodios", "/conteudo-protegido").hasAnyAuthority("ROLE_SUBSCRIBER", "ROLE_ADMIN")
                         .requestMatchers("/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
 
                         // 4. Regra final: Qualquer outra requisição deve ser feita por um usuário autenticado
@@ -54,15 +56,15 @@ public class WebSecurityConfig {
                         .logoutSuccessUrl("/?logout")
                         .permitAll()
                 )
-                // ****** A CORREÇÃO ESTÁ AQUI ******
                 .csrf(csrf -> csrf
-                        // Adicionamos o endpoint de pagamento à lista de exceções do CSRF
+                        // Adicionamos o endpoint de pagamento e /error à lista de exceções do CSRF
                         .ignoringRequestMatchers(
-                                "/process-card-payment", // <-- ADICIONADO AQUI
+                                "/process-card-payment",
                                 "/register",
                                 "/api/**",
                                 "/forgot-password",
-                                "/reset-password"
+                                "/reset-password",
+                                "/error" // ✅ ADICIONADO POR PRÁTICA
                         )
                 );
 

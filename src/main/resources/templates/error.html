@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ops! Algo deu errado</title>
+    <!-- Reutiliza seu CSS principal se quiser, ou usa o estilo abaixo -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body {
+            background-color: #0A1517; /* Fundo escuro do tema */
+            color: #D6C178; /* Cor dourada do tema */
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .error-container {
+            background-color: #1d2a2d;
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid #3d2c4b;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #BE93FD; /* Roxo do tema */
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .error-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #3d2c4b;
+        }
+
+        .btn-home {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3C8F9E;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-home:hover {
+            background-color: #4db1c0;
+            color: white;
+            text-decoration: none;
+        }
+
+        .status-code {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 0;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="error-container">
+    <!-- Exibe o código do erro (ex: 404, 500) dinamicamente -->
+    <div class="status-code" th:text="${status}">404</div>
+
+    <h1>Você encontrou ...</h1>
+
+    <!-- Sua imagem da Coruja -->
+    <img src="https://pub-9083d14195514a9f89133574d545efc9.r2.dev/Celioxer/errorcoruja.jpg"
+         alt="Coruja de Erro"
+         class="error-image">
+
+    <!-- Mensagem dinâmica ou padrão -->
+
+
+    <p>A Coruja...</p>
+
+    <a href="/" class="btn-home">Voltar para a Realidade (Início)</a>
+</div>
+
+</body>
+</html>

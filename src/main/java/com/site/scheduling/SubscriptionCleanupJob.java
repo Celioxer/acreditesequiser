@@ -28,7 +28,8 @@ public class SubscriptionCleanupJob {
     @Scheduled(cron = "0 0 3 * * *")
     public void cleanupExpiredSubscriptions() {
         logger.info("Iniciando varredura de assinaturas expiradas...");
-        long count = usuarioService.deactivateExpiredSubscribers();
+        long count = usuarioService.desativarAssinaturasVencidas();
+
         logger.info("Varredura de assinaturas finalizada. Total de {} usuários desativados.", count);
     }
 }

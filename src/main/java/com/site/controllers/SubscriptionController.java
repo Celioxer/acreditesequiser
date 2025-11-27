@@ -1,21 +1,20 @@
 package com.site.controllers;
 
-import com.mercadopago.exceptions.MPApiException;
-import com.mercadopago.exceptions.MPException;
-import com.mercadopago.resources.payment.Payment;
 import com.site.dto.PaymentRequestDTO;
 import com.site.models.Usuario;
-import com.site.services.MercadoPagoService;
+import com.site.services.MercadoPagoWebClientService;
 import com.site.services.UsuarioService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,16 +24,56 @@ import java.util.Optional;
 @Controller
 public class SubscriptionController {
 
-    private final MercadoPagoService mercadoPagoService;
+    private final MercadoPagoWebClientService mercadoPagoWebClientService;
     private final UsuarioService usuarioService;
+    private static final Logger logger = LoggerFactory.getLogger(SubscriptionController.class);
 
-    // Construtor
-    public SubscriptionController(MercadoPagoService mercadoPagoService, UsuarioService usuarioService) {
-        this.mercadoPagoService = mercadoPagoService;
+    public SubscriptionController(
+            MercadoPagoWebClientService mercadoPagoWebClientService,
+            UsuarioService usuarioService
+    ) {
+        this.mercadoPagoWebClientService = mercadoPagoWebClientService;
         this.usuarioService = usuarioService;
     }
 
-    // Método existente para NOVO PAGAMENTO (checkout)
+    // ============================================================
+    // ✅ NOVO ENDPOINT DE VERIFICAÇÃO DE STATUS
+    // (Necessário para a automação da página do PIX)
+    // ============================================================
+
+    /**
+     * Endpoint para o frontend (JavaScript) "perguntar" se o usuário atual
+     * já tem o acesso liberado (checando o banco de dados).
+     */
+    @GetMapping("/api/user/status")
+    @ResponseBody
+    public Mono<ResponseEntity<Map<String, String>>> getUsuarioStatus(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return Mono.just(ResponseEntity.status(401).body(Map.of("status", "UNAUTHENTICATED")));
+        }
+
+        try {
+            Usuario usuario = usuarioService.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+
+            boolean acessoValido = usuario.getAcessoValidoAte() != null &&
+                    usuario.getAcessoValidoAte().isAfter(LocalDateTime.now());
+
+            if (acessoValido && usuario.getRole() == Usuario.Role.SUBSCRIBER) {
+                return Mono.just(ResponseEntity.ok(Map.of("status", "APPROVED")));
+            } else {
+                return Mono.just(ResponseEntity.ok(Map.of("status", "PENDING")));
+            }
+
+        } catch (Exception e) {
+            logger.error("Erro ao verificar status do usuário", e);
+            return Mono.just(ResponseEntity.status(500).body(Map.of("status", "ERROR")));
+        }
+    }
+
+    // ============================================================
+    // ✅ CHECKOUT INICIAL (PIX ou CARTÃO)
+    // ============================================================
     @GetMapping("/checkout")
     public String checkout(
             @RequestParam("valor") BigDecimal valor,
@@ -44,170 +83,198 @@ public class SubscriptionController {
             Model model) {
 
         if (valor.compareTo(new BigDecimal("10.00")) < 0) {
-            redirectAttributes.addFlashAttribute("error", "O valor do apoio deve ser de no mínimo R$ 10,00.");
+            redirectAttributes.addFlashAttribute("error", "Valor mínimo é R$ 10,00.");
             return "redirect:/subscription";
         }
-
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
-        if (optionalUsuario.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
+        Optional<Usuario> optUsuario = usuarioService.findByUsername(authentication.getName());
+        if (optUsuario.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Erro: usuário não encontrado.");
             return "redirect:/subscription";
         }
-        Usuario usuario = optionalUsuario.get();
-        // **IMPORTANTE:** Descrição clara para diferenciar da renovação
+        Usuario usuario = optUsuario.get();
         String descricao = "Apoio Mensal - Novo Pagamento";
-
         if ("pix".equals(paymentMethod)) {
-            try {
-                Payment payment = mercadoPagoService.createPixPayment(usuario, descricao, valor);
-                return "redirect:" + payment.getPointOfInteraction().getTransactionData().getTicketUrl();
-            } catch (MPException | MPApiException e) {
-                redirectAttributes.addFlashAttribute("error", "Erro ao criar pagamento Pix: " + e.getMessage());
-                return "redirect:/subscription";
-            }
-        } else if ("card".equals(paymentMethod)) {
-            model.addAttribute("valor", valor);
-            model.addAttribute("descricao", descricao); // Passa a descrição para o formulário de cartão
-            return "auth/card_payment";
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Método de pagamento inválido.");
-            return "redirect:/subscription";
+            model.addAttribute("valor", valor); // Correto
+            return "auth/pix_payment";          // Correto
         }
+        if ("card".equals(paymentMethod)) {
+            model.addAttribute("valor", valor);
+            model.addAttribute("descricao", descricao);
+            return "auth/card_payment";
+        }
+        redirectAttributes.addFlashAttribute("error", "Método inválido.");
+        return "redirect:/subscription";
     }
 
-    // NOVO MÉTODO PARA RENOVAÇÃO ANTECIPADA OU TARDIA
+    // ============================================================
+    // ✅ RENOVAÇÃO DE ASSINATURA (CORRIGIDO)
+    // ============================================================
     @GetMapping("/assinatura/renovar")
-    public String renewSubscription(
+    public String renovarAssinatura(
             @RequestParam("valor") BigDecimal valor,
             @RequestParam("paymentMethod") String paymentMethod,
             Authentication authentication,
             RedirectAttributes redirectAttributes,
-            Model model) { // Adiciona Model para Cartão
+            Model model) {
 
         if (valor.compareTo(new BigDecimal("10.00")) < 0) {
-            redirectAttributes.addFlashAttribute("error", "O valor do apoio deve ser de no mínimo R$ 10,00.");
+            redirectAttributes.addFlashAttribute("error", "Valor mínimo é R$ 10,00.");
             return "redirect:/conteudo-protegido";
         }
-
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
-        if (optionalUsuario.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
+        Optional<Usuario> optUsuario = usuarioService.findByUsername(authentication.getName());
+        if (optUsuario.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Erro: usuário não encontrado.");
             return "redirect:/logout";
         }
-        Usuario usuario = optionalUsuario.get();
-
-        // **DESCRIÇÃO CRÍTICA:** Indica que é uma renovação para ser tratada no Webhook/processCardPayment
+        Usuario usuario = optUsuario.get();
         String descricao = "Apoio Mensal - Renovação de Assinatura";
 
+        // --- INÍCIO DA CORREÇÃO ---
         if ("pix".equals(paymentMethod)) {
-            try {
-                // Reutiliza o método de criação de pagamento PIX
-                Payment payment = mercadoPagoService.createPixPayment(usuario, descricao, valor);
-                return "redirect:" + payment.getPointOfInteraction().getTransactionData().getTicketUrl();
-            } catch (MPException | MPApiException e) {
-                redirectAttributes.addFlashAttribute("error", "Erro ao criar pagamento Pix para renovação: " + e.getMessage());
-                return "redirect:/conteudo-protegido";
-            }
-        } else if ("card".equals(paymentMethod)) {
-            // Se for Cartão, vai para a página do formulário
+            // ❌ ANTES (Errado)
+            // return "redirect:/processar-pix?valor=" + valor;
+
+            // ✅ DEPOIS (Correto)
             model.addAttribute("valor", valor);
-            model.addAttribute("descricao", descricao); // Passa a descrição de 'Renovação'
-            return "auth/card_payment";
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Método de pagamento inválido.");
-            return "redirect:/conteudo-protegido";
+            return "auth/pix_payment"; // Renderiza a página do QR Code
         }
+        // --- FIM DA CORREÇÃO ---
+
+        if ("card".equals(paymentMethod)) {
+            model.addAttribute("valor", valor);
+            model.addAttribute("descricao", descricao);
+            return "auth/card_payment";
+        }
+        redirectAttributes.addFlashAttribute("error", "Método inválido.");
+        return "redirect:/conteudo-protegido";
     }
 
+
+    // ============================================================
+    // ✅ PROCESSAR PIX (Corrigido com Bloco Único de Erro)
+    // ============================================================
+
+    @GetMapping("/processar-pix")
+    @ResponseBody
+    public Mono<ResponseEntity<Map<String, Object>>> processarPix(
+            @RequestParam BigDecimal valor,
+            Authentication authentication) {
+
+        Optional<Usuario> optUser = usuarioService.findByUsername(authentication.getName());
+        if (optUser.isEmpty()) {
+            return Mono.just(ResponseEntity.badRequest().body(Map.of("error", "Usuário não encontrado")));
+        }
+
+        Usuario usuario = optUser.get();
+        String descricao = "Apoio Mensal";
+
+        return mercadoPagoWebClientService
+                .iniciarPagamentoPix(usuario, descricao, valor)
+                .map(resp -> ResponseEntity.ok((Map<String, Object>) resp)) // SUCESSO
+                .onErrorResume(throwable -> { // <-- CORREÇÃO AQUI: Captura TUDO
+                    if (throwable instanceof WebClientResponseException) {
+                        // ERRO 4xx/5xx vindo do Mercado Pago
+                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                        logger.warn("Erro do Mercado Pago ao criar PIX: {} - Body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+                        return Mono.just(ResponseEntity
+                                .status(ex.getStatusCode())
+                                .body(ex.getResponseBodyAs(Map.class)));
+                    } else {
+                        // ERRO 500 Interno (NullPointer, etc)
+                        logger.error("Erro interno ao processar PIX: {}", throwable.getMessage());
+                        return Mono.just(ResponseEntity
+                                .status(500)
+                                .body(Map.of("error", "Erro interno no servidor.")));
+                    }
+                });
+    }
+
+
+    // ============================================================
+    // ✅ PROCESSAR PAGAMENTO COM CARTÃO (Corrigido com Bloco Único de Erro)
+    // ============================================================
+
     @PostMapping("/process-card-payment")
-    public ResponseEntity<?> processCardPayment(
+    @ResponseBody
+    public Mono<ResponseEntity<Map<String, Object>>> processCardPayment(
             @RequestBody PaymentRequestDTO paymentRequest,
             Authentication authentication) {
 
-        try {
-            if (paymentRequest.getValor().compareTo(new BigDecimal("10.00")) < 0) {
-                return ResponseEntity.status(400).body(Map.of("error", "Valor mínimo: R$ 10,00."));
-            }
-
-            Optional<Usuario> optionalUsuario = usuarioService.findByUsername(authentication.getName());
-            if (optionalUsuario.isEmpty()) {
-                return ResponseEntity.status(500).body(Map.of("error", "Usuário não encontrado."));
-            }
-            Usuario usuario = optionalUsuario.get();
-
-            String descricao = paymentRequest.getDescricao();
-
-            Payment payment = mercadoPagoService.createCardPayment(
-                    usuario,
-                    paymentRequest.getToken(),
-                    descricao,
-                    paymentRequest.getValor(),
-                    paymentRequest.getInstallments(),
-                    paymentRequest.getPaymentMethodId(),
-                    paymentRequest.getIssuerId()
-            );
-
-            if ("approved".equals(payment.getStatus())) {
-                int planoDuracaoDias = 30;
-                usuarioService.updateSubscriptionStatus(usuario.getEmail(), planoDuracaoDias);
-
-                // ***** REDIRECIONAMENTO ALTERADO PARA PÁGINA DE SUCESSO *****
-                return ResponseEntity.ok(Map.of("redirectUrl", "/pagamento-sucesso"));
-            } else if ("in_process".equals(payment.getStatus())) {
-                return ResponseEntity.ok(Map.of("redirectUrl", "/payment-pending"));
-            } else {
-                String errorRedirectUrl = "/subscription?error=payment_" + payment.getStatus()
-                        + "&detail=" + payment.getStatusDetail();
-                return ResponseEntity.ok(Map.of("redirectUrl", errorRedirectUrl));
-            }
-        } catch (MPException | MPApiException e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Erro ao processar pagamento com Mercado Pago: " + e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro inesperado. Tente novamente mais tarde."));
+        if (paymentRequest.getValor().compareTo(new BigDecimal("10.00")) < 0) {
+            return Mono.just(ResponseEntity.badRequest().body(
+                    Map.of("error", "Valor mínimo é R$ 10,00.")
+            ));
         }
+
+        Optional<Usuario> optUser = usuarioService.findByUsername(authentication.getName());
+        if (optUser.isEmpty()) {
+            return Mono.just(ResponseEntity.status(500).body(
+                    Map.of("error", "Usuário não encontrado.")
+            ));
+        }
+
+        Usuario usuario = optUser.get();
+
+        return mercadoPagoWebClientService
+                .criarAssinatura(
+                        usuario,
+                        paymentRequest.getToken(),
+                        paymentRequest.getDescricao(),
+                        paymentRequest.getValor()
+                )
+                .map(resp -> ResponseEntity.ok((Map<String, Object>) resp)) // SUCESSO
+                .onErrorResume(throwable -> { // <-- CORREÇÃO AQUI: Captura TUDO
+                    if (throwable instanceof WebClientResponseException) {
+                        // ERRO 4xx/5xx vindo do Mercado Pago
+                        WebClientResponseException ex = (WebClientResponseException) throwable;
+                        logger.warn("Erro do Mercado Pago ao criar assinatura: {} - Body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+                        return Mono.just(ResponseEntity
+                                .status(ex.getStatusCode())
+                                .body(ex.getResponseBodyAs(Map.class)));
+                    } else {
+                        // ERRO 500 Interno (NullPointer, etc)
+                        logger.error("Erro interno ao processar pagamento com cartão: {}", throwable.getMessage());
+                        return Mono.just(ResponseEntity
+                                .status(500)
+                                .body(Map.of("error", "Erro interno no servidor.")));
+                    }
+                });
     }
 
-    /**
-     * NOVO ENDPOINT: Exibe a página de sucesso após o pagamento (com ou sem logout automático).
-     */
+    // ============================================================
+    // ✅ PÁGINAS (Inalteradas)
+    // ============================================================
+
     @GetMapping("/pagamento-sucesso")
-    public String showPaymentSuccessPage() {
-        return "auth/payment-success"; // Você deve criar este template HTML
-    }
+    public String showSuccessPage() { return "auth/payment-success"; }
 
     @GetMapping("/subscription")
-    public String showSubscriptionPage() {
-        return "auth/subscription";
-    }
+    public String subscriptionPage() { return "auth/subscription"; }
 
     @GetMapping("/payment-pending")
-    public String showPaymentPendingPage() {
-        return "auth/payment-pending";
-    }
-
-    @GetMapping("/conteudo-protegido")
-    public String getProtectedContent(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
-        String username = authentication.getName();
-        Optional<Usuario> optionalUsuario = usuarioService.findByUsername(username);
-
-        if (optionalUsuario.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Erro: Usuário não encontrado.");
-            return "redirect:/subscription";
-        }
-
-        Usuario usuario = optionalUsuario.get();
-
-        if (usuario.getAcessoValidoAte() != null && usuario.getAcessoValidoAte().isAfter(LocalDateTime.now())) {
-            model.addAttribute("usuario", usuario);
-            return "protected-content-page";
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Assinatura necessária para acessar este conteúdo.");
-            return "redirect:/subscription";
-        }
-    }
+    public String showPendingPage() { return "auth/payment-pending"; }
 
     @GetMapping("/episodios")
-    public String showEpisodesPage() {
-        return "episodios";
+    public String episodios() { return "episodios"; }
+
+    @GetMapping("/conteudo-protegido")
+    public String conteudoProtegido(
+            Authentication auth,
+            Model model,
+            RedirectAttributes attrs) {
+
+        Optional<Usuario> opt = usuarioService.findByUsername(auth.getName());
+        if (opt.isEmpty()) {
+            attrs.addFlashAttribute("error", "Usuário não encontrado.");
+            return "redirect:/subscription";
+        }
+        Usuario usuario = opt.get();
+        if (usuario.getAcessoValidoAte() != null &&
+                usuario.getAcessoValidoAte().isAfter(LocalDateTime.now())) {
+            model.addAttribute("usuario", usuario);
+            return "protected-content-page";
+        }
+        attrs.addFlashAttribute("error", "Assinatura expirada.");
+        return "redirect:/subscription";
     }
 }

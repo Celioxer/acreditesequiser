@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Pagamento PIX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* (Use os estilos do seu 'payment-pending.html' para ficar parecido) */
+        body.auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; text-align: center; }
+        .payment-container { width: 100%; max-width: 500px; padding: 40px; background-color: #ffffff; border-radius: 12px; }
+        #qr-code-img { max-width: 250px; width: 100%; margin: 20px auto; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+        #pix-copy-paste { width: 100%; padding: 10px; margin-top: 10px; font-size: 0.9em; }
+        #status-message { font-size: 1.2em; font-weight: bold; }
+        /* Estilo para status pendente e aprovado */
+        .status-pending { color: #b07800; }
+        .status-approved { color: green; }
+    </style>
+</head>
+<body class="auth-page">
+
+<div class="payment-container">
+    <h2>Pague com PIX</h2>
+    <p>Aponte a câmera do seu celular para o QR Code abaixo ou use o "Copia e Cola".</p>
+
+    <div id="loading-message">
+        <p>Carregando seu PIX...</p>
+    </div>
+
+    <div id="pix-container" style="display: none;">
+        <img id="qr-code-img" src="" alt="PIX QR Code">
+        <label for="pix-copy-paste">PIX Copia e Cola:</label>
+        <input type="text" id="pix-copy-paste" readonly>
+        <button id="copy-button">Copiar</button>
+        <p id="status-message" class="status-pending" style="margin-top: 20px;">
+            Aguardando pagamento...
+        </p>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const valorPagamento = [[${valor}]];
+    let pollingInterval; // Variável para guardar o ID do nosso "sondador"
+
+    // --- FUNÇÃO 2: O "SONDADOR" (POLLING) ---
+    // Esta função fica perguntando ao backend se o pagamento foi aprovado
+    function startPaymentPolling() {
+        const statusMsg = document.getElementById('status-message');
+
+        pollingInterval = setInterval(() => {
+            fetch('/api/user/status') // Chama o novo endpoint
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Sondando status:", data.status);
+                    if (data.status === 'APPROVED') {
+                        // --- PAGAMENTO APROVADO! ---
+                        clearInterval(pollingInterval); // Para de perguntar
+                        statusMsg.textContent = "Pagamento Aprovado! Redirecionando...";
+                        statusMsg.className = "status-approved";
+
+                        // Redireciona para a página de sucesso (que força o re-login)
+                        window.location.href = '/pagamento-sucesso';
+                    } else {
+                        // Se não, continua "Aguardando pagamento..."
+                        statusMsg.textContent = "Aguardando pagamento...";
+                    }
+                })
+                .catch(err => {
+                    // Se o polling falhar, não faz nada, só loga
+                    console.error("Erro no polling:", err);
+                });
+        }, 3000); // Pergunta a cada 3 segundos
+    }
+
+    // --- FUNÇÃO 1: O INÍCIO (BUSCAR O QR CODE) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const loadingDiv = document.getElementById('loading-message');
+        const pixDiv = document.getElementById('pix-container');
+        const qrImg = document.getElementById('qr-code-img');
+        const qrInput = document.getElementById('pix-copy-paste');
+        const copyBtn = document.getElementById('copy-button');
+
+        fetch(`/processar-pix?valor=${valorPagamento}`)
+            .then(response => {
+                if (!response.ok) {
+                    // Se o backend der erro 400 ou 500 (ex: CPF nulo)
+                    return response.json().then(errorData => {
+                        throw errorData;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Pega os dados do PIX
+                const txData = data.point_of_interaction.transaction_data;
+                const qrBase64 = txData.qr_code_base64;
+                const qrCopyPaste = txData.qr_code;
+
+                // Mostra os dados na tela
+                qrImg.src = `data:image/png;base64,${qrBase64}`;
+                qrInput.value = qrCopyPaste;
+
+                loadingDiv.style.display = 'none';
+                pixDiv.style.display = 'block';
+
+                copyBtn.onclick = () => {
+                    qrInput.select();
+                    document.execCommand('copy');
+                    copyBtn.textContent = 'Copiado!';
+                };
+
+                // --- INICIA O "SONDADOR" ---
+                startPaymentPolling();
+            })
+            .catch(err => {
+                // Se falhar ao *gerar* o PIX (ex: erro 400)
+                console.error("Erro ao gerar PIX:", err);
+                let errorMessage = "Erro ao gerar o PIX. Tente novamente.";
+                if(err.message) {
+                    errorMessage = err.message;
+                }
+                loadingDiv.innerHTML = `<p style="color: red;">${errorMessage}</p>`;
+            });
+    });
+</script>
+</body>
+</html>

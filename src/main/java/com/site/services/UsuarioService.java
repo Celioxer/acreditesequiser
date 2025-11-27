@@ -1,7 +1,6 @@
 package com.site.services;
 
 import com.site.models.Usuario;
-import com.site.models.Usuario.Role; // Importe o enum Role se for necessário no seu modelo
 import com.site.repositories.EmailLiberadoRepository;
 import com.site.repositories.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,23 +8,100 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List; // Importe este
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UsuarioService {
+
     private final UsuarioRepository usuarioRepository;
     private final EmailLiberadoRepository emailLiberadoRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    // Construtor
-    public UsuarioService(UsuarioRepository usuarioRepository, EmailLiberadoRepository emailLiberadoRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public UsuarioService(
+            UsuarioRepository usuarioRepository,
+            EmailLiberadoRepository emailLiberadoRepository,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService
+    ) {
         this.usuarioRepository = usuarioRepository;
         this.emailLiberadoRepository = emailLiberadoRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+    }
+
+    // ==========================================================
+    // ✅ USADO PELOS WEBHOOKS DO MERCADO PAGO
+    // ==========================================================
+
+    @Transactional
+    public void liberarAssinatura(Long usuarioId, int dias) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + usuarioId));
+
+        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime atual = usuario.getAcessoValidoAte();
+
+        // Esta lógica de "empilhar" está PERFEITA.
+        LocalDateTime novoVencimento =
+                (atual == null || atual.isBefore(agora))
+                        ? agora.plusDays(dias)      // pagamento novo
+                        : atual.plusDays(dias);      // renovação antecipada
+
+        usuario.setAcessoValidoAte(novoVencimento);
+        usuario.setRole(Usuario.Role.SUBSCRIBER); // Define como assinante
+
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void removerAssinatura(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + usuarioId));
+
+        usuario.setRole(Usuario.Role.USER);
+
+        // --- CORREÇÃO CRÍTICA ---
+        // Se o acesso deve ser removido IMEDIATAMENTE após o cancelamento.
+        // Se o usuário puder usar o acesso até o fim do período pago,
+        // então este método deve apenas mudar o Role e não tocar na data.
+        // Mas o seu controller SÓ OLHA A DATA.
+        // Vamos forçar a data para expirar "agora".
+        usuario.setAcessoValidoAte(LocalDateTime.now().minusMinutes(1)); // Expira o acesso
+
+        usuarioRepository.save(usuario);
+    }
+
+    // ==========================================================
+    // ✅ SISTEMA DE EXPIRAÇÃO AUTOMÁTICA
+    // ==========================================================
+
+    @Transactional
+    public long desativarAssinaturasVencidas() {
+        // Encontra usuários que DEVERIAM ser assinantes mas cujo acesso expirou
+        List<Usuario> expiram = usuarioRepository
+                .findByRoleAndAcessoValidoAteBefore(Usuario.Role.SUBSCRIBER, LocalDateTime.now());
+
+        expiram.forEach(u -> {
+            u.setRole(Usuario.Role.USER);
+            // Também podemos garantir que a data seja nula ou antiga,
+            // embora o controller já vá bloquear de qualquer forma.
+            // u.setAcessoValidoAte(null); // Opcional, mas limpo
+        });
+
+        usuarioRepository.saveAll(expiram);
+
+        return expiram.size();
+    }
+
+    // ==========================================================
+    // ✅ Registro básico de usuários
+    // ==========================================================
+
+    public Optional<Usuario> findByUsername(String username) {
+        return usuarioRepository.findByEmail(username);
     }
 
     @Transactional
@@ -33,82 +109,27 @@ public class UsuarioService {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
             throw new RuntimeException("Email já cadastrado");
         }
+
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         usuario.setRole(Usuario.Role.USER);
+
         return usuarioRepository.save(usuario);
     }
 
-    public Optional<Usuario> findByUsername(String username) {
-        return usuarioRepository.findByEmail(username);
-    }
-
-    /**
-     * Atualiza o status da assinatura e estende o acesso.
-     * Esta lógica suporta renovação antecipada, estendendo a data de vencimento
-     * a partir da data de vencimento atual (se for futura).
-     */
-    @Transactional
-    public void updateSubscriptionStatus(String email, int planDurationInDays) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o email: " + email));
-
-        LocalDateTime currentValidDate = usuario.getAcessoValidoAte();
-        LocalDateTime newValidDate;
-
-        if (currentValidDate == null || currentValidDate.isBefore(LocalDateTime.now())) {
-            // Se o acesso for nulo ou vencido, adiciona dias a partir de agora
-            newValidDate = LocalDateTime.now().plusDays(planDurationInDays);
-        } else {
-            // Se o acesso ainda for válido (renovação antecipada), adiciona dias à data de vencimento atual
-            newValidDate = currentValidDate.plusDays(planDurationInDays);
-        }
-
-        usuario.setAcessoValidoAte(newValidDate);
-        usuario.setRole(Usuario.Role.SUBSCRIBER);
-        usuarioRepository.save(usuario);
-    }
-
-    /**
-     * MÉTODO NOVO: Varre o banco de dados e desativa assinaturas expiradas,
-     * mudando o Role de 'SUBSCRIBER' para 'USER'.
-     *
-     * @return O número de usuários desativados.
-     */
-    @Transactional
-    public long deactivateExpiredSubscribers() {
-        // Busca usuários que são SUBSCRIBER e cuja data de acesso está no passado
-        List<Usuario> expiredUsers = usuarioRepository
-                .findByRoleAndAcessoValidoAteBefore(Usuario.Role.SUBSCRIBER, LocalDateTime.now());
-
-        if (expiredUsers.isEmpty()) {
-            return 0;
-        }
-
-        for (Usuario usuario : expiredUsers) {
-            usuario.setRole(Usuario.Role.USER);
-            usuarioRepository.save(usuario);
-        }
-
-        return expiredUsers.size();
-    }
-
-
-    public boolean isEmailLiberado(String email) {
-        return emailLiberadoRepository.existsByEmail(email);
-    }
-
-    // =================================================================
-    // MÉTODOS PARA REDEFINIÇÃO DE SENHA
-    // =================================================================
+    // ==========================================================
+    // ✅ Redefinição de senha
+    // ==========================================================
 
     @Transactional
     public void createPasswordResetTokenForUser(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com o email: " + email));
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         String token = UUID.randomUUID().toString();
+
         usuario.setPasswordResetToken(token);
-        usuario.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(30)); // Token expira em 30 minutos
+        usuario.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(30));
+
         usuarioRepository.save(usuario);
 
         emailService.sendPasswordResetEmail(usuario.getEmail(), token);
@@ -116,18 +137,18 @@ public class UsuarioService {
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
-        // Você precisará adicionar 'findByPasswordResetToken' ao seu UsuarioRepository
+
         Usuario usuario = usuarioRepository.findByPasswordResetToken(token)
-                .orElseThrow(() -> new RuntimeException("Token de redefinição inválido."));
+                .orElseThrow(() -> new RuntimeException("Token inválido."));
 
         if (usuario.getPasswordResetTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Token de redefinição expirado.");
+            throw new RuntimeException("Token expirado.");
         }
 
         usuario.setSenha(passwordEncoder.encode(newPassword));
-        // Limpa o token para que não possa ser usado novamente
         usuario.setPasswordResetToken(null);
         usuario.setPasswordResetTokenExpiry(null);
+
         usuarioRepository.save(usuario);
     }
 }
