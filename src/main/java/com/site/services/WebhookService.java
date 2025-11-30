@@ -34,7 +34,6 @@ public class WebhookService {
 
     // =====================================================
     // ✅ PROCESSAR PAGAMENTO PIX/CARTÃO (type=payment)
-    //    (Corrigido com .block() e try-catch para Long.parseLong)
     // =====================================================
     @Transactional
     public void processPaymentNotification(String paymentId) {
@@ -54,10 +53,25 @@ public class WebhookService {
 
             logger.info("🔎 Processando 'payment' ID: {}. Detalhes: {}", paymentId, response);
 
-            String status = response.get("status").toString();
-            String externalRef = response.get("external_reference").toString();
+            // --- INÍCIO DA CORREÇÃO DO NULLPOINTEREXCEPTION ---
 
-            // --- INÍCIO DA CORREÇÃO (NumberFormatException) ---
+            Object statusObj = response.get("status");
+            if (statusObj == null) {
+                logger.warn("Webhook 'payment' ID: {} recebido sem o campo 'status'. Ignorado.", paymentId);
+                return;
+            }
+            String status = statusObj.toString();
+
+            Object externalRefObj = response.get("external_reference");
+            if (externalRefObj == null) {
+                logger.warn("Webhook 'payment' ID: {} recebido sem o campo 'external_reference'. Ignorado.", paymentId);
+                return;
+            }
+            String externalRef = externalRefObj.toString(); // Esta era a antiga LINHA 58
+
+            // --- FIM DA CORREÇÃO DO NULLPOINTEREXCEPTION ---
+
+            // --- TRATAMENTO PARA GARANTIR QUE external_reference É UM ID DE USUÁRIO ---
             Long usuarioId;
             try {
                 usuarioId = Long.parseLong(externalRef);
@@ -65,19 +79,29 @@ public class WebhookService {
                 logger.warn("Webhook 'payment' recebido com external_reference inválida (não é um número): '{}'. Ignorando.", externalRef);
                 return; // Para de processar este webhook, pois não é de um usuário
             }
-            // --- FIM DA CORREÇÃO ---
+            // --- FIM DO TRATAMENTO ---
 
             if ("approved".equals(status)) {
+
+                // Extração segura de campos aninhados:
                 Map<String, Object> paymentMethod = (Map<String, Object>) response.get("payment_method");
-                String paymentMethodId = paymentMethod.get("id").toString();
-                BigDecimal amount = new BigDecimal(response.get("transaction_amount").toString());
-                String statusDetail = response.get("status_detail").toString();
+                String paymentMethodId = (paymentMethod != null && paymentMethod.get("id") != null)
+                        ? paymentMethod.get("id").toString() : "UNKNOWN";
+
+                BigDecimal amount = (response.get("transaction_amount") != null)
+                        ? new BigDecimal(response.get("transaction_amount").toString())
+                        : BigDecimal.ZERO;
+
+                String statusDetail = (response.get("status_detail") != null)
+                        ? response.get("status_detail").toString()
+                        : "N/A";
 
                 LocalDateTime dateApproved = LocalDateTime.now();
                 if (response.get("date_approved") != null) {
                     String dateApprovedStr = response.get("date_approved").toString();
                     dateApproved = OffsetDateTime.parse(dateApprovedStr).toLocalDateTime();
                 }
+
                 Integer installments = response.get("installments") != null ? ((Number) response.get("installments")).intValue() : null;
 
                 PaymentHistory ph = new PaymentHistory(
@@ -107,7 +131,7 @@ public class WebhookService {
 
     // =====================================================
     // ✅ PROCESSAR MUDANÇA DE STATUS DA ASSINATURA (type=preapproval)
-    //    (Corrigido com .block() e try-catch para Long.parseLong)
+    //    (Corrigido para segurança contra NPE)
     // =====================================================
     @Transactional
     public void processSubscriptionNotification(String preapprovalId) {
@@ -122,10 +146,25 @@ public class WebhookService {
 
             logger.info("🔎 Processando 'preapproval' ID: {}. Detalhes: {}", preapprovalId, response);
 
-            String status = response.get("status").toString();
-            String externalRef = response.get("external_reference").toString();
+            // --- INÍCIO DA CORREÇÃO DO NULLPOINTEREXCEPTION (status e external_reference) ---
 
-            // --- INÍCIO DA CORREÇÃO (NumberFormatException) ---
+            Object statusObj = response.get("status");
+            if (statusObj == null) {
+                logger.warn("Webhook 'preapproval' ID: {} recebido sem o campo 'status'. Ignorado.", preapprovalId);
+                return;
+            }
+            String status = statusObj.toString();
+
+            Object externalRefObj = response.get("external_reference");
+            if (externalRefObj == null) {
+                logger.warn("Webhook 'preapproval' ID: {} recebido sem o campo 'external_reference'. Ignorado.", preapprovalId);
+                return;
+            }
+            String externalRef = externalRefObj.toString();
+
+            // --- FIM DA CORREÇÃO DO NULLPOINTEREXCEPTION ---
+
+            // --- TRATAMENTO PARA GARANTIR QUE external_reference É UM ID DE USUÁRIO ---
             Long usuarioId;
             try {
                 usuarioId = Long.parseLong(externalRef);
@@ -133,7 +172,7 @@ public class WebhookService {
                 logger.warn("Webhook 'preapproval' recebido com external_reference inválida (não é um número): '{}'. Ignorando.", externalRef);
                 return; // Para de processar este webhook
             }
-            // --- FIM DA CORREÇÃO ---
+            // --- FIM DO TRATAMENTO ---
 
             switch (status) {
                 case "paused":
