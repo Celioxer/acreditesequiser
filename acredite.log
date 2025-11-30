@@ -50,3 +50,5 @@
 2025-11-26T20:16:27.005-03:00  WARN 23276 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
 2025-11-26T20:16:27.506-03:00  WARN 23276 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
 2025-11-26T20:16:27.806-03:00  INFO 23276 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Started AcrediteSeQuiserApplication in 2.498 seconds (process running for 65.262)
+2025-11-26T21:28:56.870-03:00  INFO 23276 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2025-11-26T21:28:56.881-03:00  INFO 23276 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
