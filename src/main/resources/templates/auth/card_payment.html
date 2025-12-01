@@ -159,7 +159,8 @@
     // Variáveis do Thymeleaf
     const valorPagamento = [[${valor}]];
     const descricaoPagamento = [[${descricao}]];
-    const publicKey = 'APP_USR-6b43d260-2d40-4a94-807d-80a43ee05a7c'; // Lembre-se de trocar para a Chave de Produção
+    // Chave pública de produção (a mesma que você já configurou)
+    const publicKey = 'APP_USR-6b43d260-2d40-4a94-807d-80a43ee05a7c';
 
     console.log('Inicializando Mercado Pago com valor:', valorPagamento);
 
@@ -186,7 +187,6 @@
                 console.log("Formulário montado com sucesso.");
             },
 
-            // --- INÍCIO DO CÓDIGO CORRIGIDO ---
             onSubmit: event => {
                 event.preventDefault();
                 const submitButton = document.getElementById('form-checkout__submit');
@@ -235,7 +235,6 @@
                     } else if (data.status === 'in_process' || data.status === 'pending') {
                         window.location.href = '/payment-pending';
                     } else {
-                        // Tenta pegar a causa do erro, se disponível
                         let message = 'Falha ao criar assinatura.';
                         if (data.message) {
                             message = data.message;
@@ -248,28 +247,50 @@
                 .catch(error => {
                     console.error("Erro ao processar pagamento:", error);
                     let errorMessage = "Ocorreu um erro desconhecido.";
+
                     if (error.message) {
-                        errorMessage = error.message;
+                        // --- TRATAMENTO ESPECÍFICO DO ERRO DE STATUS PENDENTE ---
+                        if (error.message.includes("status pending")) {
+                            errorMessage = "A validação do seu cartão está pendente no banco. Por favor, aguarde alguns minutos ou tente usar outro cartão.";
+                        } else {
+                            // Outros erros
+                            switch (error.code) {
+                                case 'cc_rejected_bad_filled_security_code':
+                                    errorMessage = "O código de segurança (CVV) está incorreto.";
+                                    break;
+                                case 'cc_rejected_high_risk':
+                                    errorMessage = "O pagamento foi recusado pelo sistema de segurança. Tente outro cartão.";
+                                    break;
+                                case 'cc_rejected_insufficient_amount':
+                                    errorMessage = "O cartão não possui saldo suficiente.";
+                                    break;
+                                case 'cc_rejected_bad_filled_date':
+                                    errorMessage = "A data de validade está incorreta.";
+                                    break;
+                                case 'cc_rejected_other_reason':
+                                    errorMessage = "O banco emissor recusou o pagamento.";
+                                    break;
+                                default:
+                                    errorMessage = error.message;
+                            }
+                        }
                     } else if (error.error) {
                         errorMessage = error.error;
                     }
 
-                    alert("Erro: " + errorMessage);
+                    alert("Atenção: " + errorMessage);
                     submitButton.disabled = false;
                     document.getElementById('form-checkout').classList.remove('loading');
                 });
-            }, // <-- A VÍRGULA AQUI É IMPORTANTE
+            },
 
-            // --- FIM DO CÓDIGO CORRIGIDO ---
-
-            // ESTE BLOCO 'onError' ESTAVA FALTANDO NO SEU ÚLTIMO CÓDIGO
             onError: (errors) => {
                 console.error("Erros de validação:", errors);
                 const errorMessages = errors.map(error => error.message).join('\n');
                 alert("Corrija os seguintes erros:\n" + errorMessages);
             },
-        }, // Fim do callbacks
-    }); // Fim do cardForm
+        },
+    });
 </script>
 </body>
 </html>

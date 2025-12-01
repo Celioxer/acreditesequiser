@@ -25,6 +25,8 @@ public class PaymentRequestDTO {
     public void setDescricao(String descricao) { this.descricao = descricao; }
     public PayerDTO getPayer() { return payer; }
     public void setPayer(PayerDTO payer) { this.payer = payer; }
+    public Integer getIssuerId() { return issuerId; }
+    public void setIssuerId(Integer issuerId) { this.issuerId = issuerId; }
 
     public static class PayerDTO {
         private String email;
@@ -45,6 +47,4 @@ public class PaymentRequestDTO {
         public String getNumber() { return number; }
         public void setNumber(String number) { this.number = number; }
     }
-    public Integer getIssuerId() { return issuerId; }
-    public void setIssuerId(Integer issuerId) { this.issuerId = issuerId; }
 }

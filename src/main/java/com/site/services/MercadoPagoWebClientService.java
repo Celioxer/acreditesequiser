@@ -43,7 +43,7 @@ public class MercadoPagoWebClientService {
     }
 
     // ==========================================================
-    // ✅ PIX (Corrigido com E-mail nulo)
+    // ✅ PIX
     // ==========================================================
     public Mono<Map<String, Object>> iniciarPagamentoPix(
             com.site.models.Usuario usuario,
@@ -55,10 +55,8 @@ public class MercadoPagoWebClientService {
         body.put("description", descricao);
         body.put("payment_method_id", "pix");
 
-        // --- INÍCIO DA CORREÇÃO (E-mail nulo) ---
-        // Criamos o objeto 'payer' de forma segura, pois Map.of() não aceita nulos
         Map<String, Object> payerMap = new HashMap<>();
-        payerMap.put("email", usuario.getEmail() != null ? usuario.getEmail() : ""); // <-- CORRIGIDO
+        payerMap.put("email", usuario.getEmail() != null ? usuario.getEmail() : "");
         payerMap.put("first_name", getFirstName(usuario.getNome()));
         payerMap.put("last_name", getLastName(usuario.getNome()));
         payerMap.put("identification", Map.of(
@@ -66,7 +64,6 @@ public class MercadoPagoWebClientService {
                 "number", usuario.getCpf() != null ? usuario.getCpf() : ""
         ));
         body.put("payer", payerMap);
-        // --- FIM DA CORREÇÃO ---
 
         body.put("external_reference", usuario.getId().toString());
 
@@ -80,7 +77,7 @@ public class MercadoPagoWebClientService {
     }
 
     // ==========================================================
-    // ✅ CARTÃO ÚNICO (Corrigido com E-mail nulo)
+    // ✅ CARTÃO ÚNICO
     // ==========================================================
     public Mono<Map<String, Object>> iniciarPagamentoCartao(
             com.site.models.Usuario usuario,
@@ -98,9 +95,8 @@ public class MercadoPagoWebClientService {
         body.put("installments", installments);
         body.put("payment_method_id", paymentMethodId);
 
-        // --- INÍCIO DA CORREÇÃO (E-mail nulo) ---
         Map<String, Object> payerMap = new HashMap<>();
-        payerMap.put("email", usuario.getEmail() != null ? usuario.getEmail() : ""); // <-- CORRIGIDO
+        payerMap.put("email", usuario.getEmail() != null ? usuario.getEmail() : "");
         payerMap.put("first_name", getFirstName(usuario.getNome()));
         payerMap.put("last_name", getLastName(usuario.getNome()));
         payerMap.put("identification", Map.of(
@@ -108,7 +104,6 @@ public class MercadoPagoWebClientService {
                 "number", usuario.getCpf() != null ? usuario.getCpf() : ""
         ));
         body.put("payer", payerMap);
-        // --- FIM DA CORREÇÃO ---
 
         body.put("external_reference", usuario.getId().toString());
         if (issuerId != null) { body.put("issuer_id", issuerId); }
@@ -123,7 +118,7 @@ public class MercadoPagoWebClientService {
     }
 
     // ==========================================================
-    // ⭐️ CRIAR ASSINATURA (Corrigido com 'back_url' e Idempotência)
+    // ⭐️ CRIAR ASSINATURA (CORRIGIDO: Sem forçar 'Authorized')
     // ==========================================================
     public Mono<Map<String, Object>> criarAssinatura(
             com.site.models.Usuario usuario,
@@ -140,14 +135,13 @@ public class MercadoPagoWebClientService {
         Map<String, Object> body = new HashMap<>();
         body.put("reason", descricao);
         body.put("auto_recurring", autoRecurring);
-
-        // A API de Assinatura exige um e-mail. Se for nulo, a API vai retornar 400,
-        // o que é melhor do que o nosso backend crashar com 500.
         body.put("payer_email", usuario.getEmail() != null ? usuario.getEmail() : "");
-
         body.put("card_token_id", cardToken);
         body.put("external_reference", usuario.getId().toString());
-        body.put("status", "Authorized");
+
+        // ❌ REMOVIDO: body.put("status", "Authorized");
+        // Deixamos o Mercado Pago decidir o status inicial (pode ser 'pending' se exigir 3DS).
+
         body.put("back_url", this.baseUrl + "/pagamento-sucesso");
 
         return webClient.post()

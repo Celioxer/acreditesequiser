@@ -41,10 +41,6 @@ public class SubscriptionController {
     // (Necessário para a automação da página do PIX)
     // ============================================================
 
-    /**
-     * Endpoint para o frontend (JavaScript) "perguntar" se o usuário atual
-     * já tem o acesso liberado (checando o banco de dados).
-     */
     @GetMapping("/api/user/status")
     @ResponseBody
     public Mono<ResponseEntity<Map<String, String>>> getUsuarioStatus(Authentication authentication) {
@@ -93,15 +89,18 @@ public class SubscriptionController {
         }
         Usuario usuario = optUsuario.get();
         String descricao = "Apoio Mensal - Novo Pagamento";
+
         if ("pix".equals(paymentMethod)) {
-            model.addAttribute("valor", valor); // Correto
-            return "auth/pix_payment";          // Correto
+            model.addAttribute("valor", valor);
+            return "auth/pix_payment"; // Renderiza a página do QR Code
         }
+
         if ("card".equals(paymentMethod)) {
             model.addAttribute("valor", valor);
             model.addAttribute("descricao", descricao);
             return "auth/card_payment";
         }
+
         redirectAttributes.addFlashAttribute("error", "Método inválido.");
         return "redirect:/subscription";
     }
@@ -130,11 +129,8 @@ public class SubscriptionController {
         String descricao = "Apoio Mensal - Renovação de Assinatura";
 
         // --- INÍCIO DA CORREÇÃO ---
+        // Agora o fluxo de renovação renderiza a página correta em vez de redirecionar para o JSON
         if ("pix".equals(paymentMethod)) {
-            // ❌ ANTES (Errado)
-            // return "redirect:/processar-pix?valor=" + valor;
-
-            // ✅ DEPOIS (Correto)
             model.addAttribute("valor", valor);
             return "auth/pix_payment"; // Renderiza a página do QR Code
         }
@@ -171,7 +167,7 @@ public class SubscriptionController {
         return mercadoPagoWebClientService
                 .iniciarPagamentoPix(usuario, descricao, valor)
                 .map(resp -> ResponseEntity.ok((Map<String, Object>) resp)) // SUCESSO
-                .onErrorResume(throwable -> { // <-- CORREÇÃO AQUI: Captura TUDO
+                .onErrorResume(throwable -> {
                     if (throwable instanceof WebClientResponseException) {
                         // ERRO 4xx/5xx vindo do Mercado Pago
                         WebClientResponseException ex = (WebClientResponseException) throwable;
@@ -223,7 +219,7 @@ public class SubscriptionController {
                         paymentRequest.getValor()
                 )
                 .map(resp -> ResponseEntity.ok((Map<String, Object>) resp)) // SUCESSO
-                .onErrorResume(throwable -> { // <-- CORREÇÃO AQUI: Captura TUDO
+                .onErrorResume(throwable -> {
                     if (throwable instanceof WebClientResponseException) {
                         // ERRO 4xx/5xx vindo do Mercado Pago
                         WebClientResponseException ex = (WebClientResponseException) throwable;

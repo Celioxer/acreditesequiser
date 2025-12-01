@@ -7,10 +7,40 @@ public class PaymentResponseDTO {
     @JsonProperty("external_reference") // Mapeia o nome do JSON
     private String externalReference;
     private PayerDTO payer;
-    // ... getters e setters ...
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getExternalReference() {
+        return externalReference;
+    }
+
+    public void setExternalReference(String externalReference) {
+        this.externalReference = externalReference;
+    }
+
+    public PayerDTO getPayer() {
+        return payer;
+    }
+
+    public void setPayer(PayerDTO payer) {
+        this.payer = payer;
+    }
 
     public static class PayerDTO {
         private String email;
-        // ... getters e setters ...
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
     }
 }
