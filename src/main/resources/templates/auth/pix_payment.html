@@ -13,7 +13,7 @@
         #status-message { font-size: 1.2em; font-weight: bold; }
         /* Estilo para status pendente e aprovado */
         .status-pending { color: #b07800; }
-        .status-approved { color: green; }
+        .status-approved { color: green; transition: all 0.5s ease; transform: scale(1.1); }
     </style>
 </head>
 <body class="auth-page">
@@ -47,18 +47,23 @@
         const statusMsg = document.getElementById('status-message');
 
         pollingInterval = setInterval(() => {
-            fetch('/api/user/status') // Chama o novo endpoint
+            fetch('/api/user/status') // Chama o endpoint de verificação
                 .then(response => response.json())
                 .then(data => {
                     console.log("Sondando status:", data.status);
                     if (data.status === 'APPROVED') {
                         // --- PAGAMENTO APROVADO! ---
-                        clearInterval(pollingInterval); // Para de perguntar
-                        statusMsg.textContent = "Pagamento Aprovado! Redirecionando...";
+                        clearInterval(pollingInterval); // Para de perguntar imediatamente
+
+                        // Atualiza a mensagem para o usuário
+                        statusMsg.textContent = "Pagamento Aprovado! Redirecionando em 5 segundos...";
                         statusMsg.className = "status-approved";
 
-                        // Redireciona para a página de sucesso (que força o re-login)
-                        window.location.href = '/pagamento-sucesso';
+                        // --- AQUI ESTÁ O DELAY ---
+                        // Espera 5000 milissegundos (5 segundos) antes de redirecionar
+                        setTimeout(() => {
+                            window.location.href = '/pagamento-sucesso';
+                        }, 5000);
                     } else {
                         // Se não, continua "Aguardando pagamento..."
                         statusMsg.textContent = "Aguardando pagamento...";
@@ -82,7 +87,6 @@
         fetch(`/processar-pix?valor=${valorPagamento}`)
             .then(response => {
                 if (!response.ok) {
-                    // Se o backend der erro 400 ou 500 (ex: CPF nulo)
                     return response.json().then(errorData => {
                         throw errorData;
                     });
@@ -90,12 +94,10 @@
                 return response.json();
             })
             .then(data => {
-                // Pega os dados do PIX
                 const txData = data.point_of_interaction.transaction_data;
                 const qrBase64 = txData.qr_code_base64;
                 const qrCopyPaste = txData.qr_code;
 
-                // Mostra os dados na tela
                 qrImg.src = `data:image/png;base64,${qrBase64}`;
                 qrInput.value = qrCopyPaste;
 
@@ -112,7 +114,6 @@
                 startPaymentPolling();
             })
             .catch(err => {
-                // Se falhar ao *gerar* o PIX (ex: erro 400)
                 console.error("Erro ao gerar PIX:", err);
                 let errorMessage = "Erro ao gerar o PIX. Tente novamente.";
                 if(err.message) {

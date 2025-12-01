@@ -49,3 +49,148 @@
 2025-11-30T20:07:53.209-03:00  WARN 26236 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
 2025-11-30T20:07:53.359-03:00  WARN 26236 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
 2025-11-30T20:07:53.441-03:00  INFO 26236 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Started AcrediteSeQuiserApplication in 0.554 seconds (process running for 19.553)
+2025-12-01T08:45:55.629-03:00  INFO 20556 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Starting AcrediteSeQuiserApplication using Java 24.0.1 with PID 20556 (C:\Users\celiors\IdeaProjects\acreditesequiser2\target\classes started by celiors in C:\Users\celiors\IdeaProjects\acreditesequiser2)
+2025-12-01T08:45:55.632-03:00  INFO 20556 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-12-01T08:45:56.082-03:00  INFO 39972 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Starting AcrediteSeQuiserApplication using Java 24.0.1 with PID 39972 (C:\Users\celiors\IdeaProjects\acreditesequiser2\target\classes started by celiors in C:\Users\celiors\IdeaProjects\acreditesequiser2)
+2025-12-01T08:45:56.084-03:00  INFO 39972 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-12-01T08:45:57.895-03:00  INFO 44760 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Starting AcrediteSeQuiserApplication using Java 24.0.1 with PID 44760 (C:\Users\celiors\IdeaProjects\acreditesequiser2\target\classes started by celiors in C:\Users\celiors\IdeaProjects\acreditesequiser2)
+2025-12-01T08:45:57.897-03:00  INFO 44760 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-12-01T08:45:58.088-03:00  INFO 20556 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-01T08:45:58.089-03:00  INFO 20556 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-01T08:45:58.199-03:00  INFO 20556 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-01T08:45:58.475-03:00  INFO 39972 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-01T08:45:58.476-03:00  INFO 39972 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-01T08:45:58.573-03:00  INFO 39972 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-01T08:45:59.226-03:00  INFO 20556 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-01T08:45:59.345-03:00  INFO 39972 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-01T08:45:59.573-03:00  INFO 20556 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@6e66ccba
+2025-12-01T08:45:59.575-03:00  INFO 39972 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@56ce4a19
+2025-12-01T08:45:59.575-03:00  INFO 20556 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-01T08:45:59.577-03:00  INFO 39972 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-01T08:45:59.678-03:00  WARN 39972 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-01T08:45:59.679-03:00  WARN 20556 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-01T08:45:59.887-03:00  INFO 33212 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Starting AcrediteSeQuiserApplication using Java 24.0.1 with PID 33212 (C:\Users\celiors\IdeaProjects\acreditesequiser2\target\classes started by celiors in C:\Users\celiors\IdeaProjects\acreditesequiser2)
+2025-12-01T08:45:59.890-03:00  INFO 33212 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-12-01T08:46:00.295-03:00  INFO 44760 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-01T08:46:00.295-03:00  INFO 44760 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-01T08:46:00.366-03:00  INFO 44760 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-01T08:46:01.392-03:00  INFO 44760 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-01T08:46:01.667-03:00  INFO 44760 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@ae66b60
+2025-12-01T08:46:01.670-03:00  INFO 44760 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-01T08:46:01.748-03:00  WARN 44760 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-01T08:46:02.238-03:00  WARN 39972 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-01T08:46:02.249-03:00  WARN 20556 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-01T08:46:02.290-03:00  INFO 17612 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Starting AcrediteSeQuiserApplication using Java 24.0.1 with PID 17612 (C:\Users\celiors\IdeaProjects\acreditesequiser2\target\classes started by celiors in C:\Users\celiors\IdeaProjects\acreditesequiser2)
+2025-12-01T08:46:02.292-03:00  INFO 17612 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-12-01T08:46:02.811-03:00  INFO 33212 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-01T08:46:02.812-03:00  INFO 33212 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-01T08:46:02.908-03:00  INFO 33212 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-01T08:46:03.444-03:00  WARN 20556 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2025-12-01T08:46:03.466-03:00  INFO 39972 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Started AcrediteSeQuiserApplication in 7.821 seconds (process running for 8.326)
+2025-12-01T08:46:03.484-03:00  WARN 20556 --- [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2025-12-01T08:46:03.492-03:00  INFO 20556 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-12-01T08:46:03.499-03:00  INFO 20556 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-12-01T08:46:03.553-03:00 ERROR 20556 --- [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2025-12-01T08:46:03.741-03:00  INFO 33212 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-01T08:46:03.884-03:00  INFO 33212 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@45459555
+2025-12-01T08:46:03.887-03:00  INFO 33212 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-01T08:46:03.939-03:00  WARN 33212 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-01T08:46:04.007-03:00  WARN 44760 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-01T08:46:04.840-03:00  INFO 17612 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-01T08:46:04.840-03:00  INFO 17612 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-01T08:46:04.863-03:00  WARN 44760 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2025-12-01T08:46:04.893-03:00  WARN 44760 --- [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2025-12-01T08:46:04.898-03:00  INFO 44760 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-12-01T08:46:04.898-03:00  INFO 17612 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-01T08:46:04.909-03:00  INFO 44760 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-12-01T08:46:04.958-03:00 ERROR 44760 --- [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2025-12-01T08:46:05.548-03:00  INFO 17612 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-01T08:46:05.688-03:00  INFO 17612 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2817e999
+2025-12-01T08:46:05.689-03:00  INFO 17612 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-01T08:46:05.691-03:00  WARN 33212 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-01T08:46:05.737-03:00  WARN 17612 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-01T08:46:06.291-03:00  WARN 33212 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2025-12-01T08:46:06.314-03:00  WARN 33212 --- [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2025-12-01T08:46:06.322-03:00  INFO 33212 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-12-01T08:46:06.334-03:00  INFO 33212 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-12-01T08:46:06.380-03:00 ERROR 33212 --- [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2025-12-01T08:46:07.160-03:00  WARN 17612 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-01T08:46:07.846-03:00  WARN 17612 --- [restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2025-12-01T08:46:07.864-03:00  WARN 17612 --- [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2025-12-01T08:46:07.868-03:00  INFO 17612 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-12-01T08:46:07.877-03:00  INFO 17612 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-12-01T08:46:07.926-03:00 ERROR 17612 --- [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2025-12-01T08:46:20.372-03:00  INFO 39972 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-12-01T08:46:20.380-03:00  INFO 39972 --- [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-12-01T08:46:22.113-03:00  INFO 22660 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Starting AcrediteSeQuiserApplication using Java 24.0.1 with PID 22660 (C:\Users\celiors\IdeaProjects\acreditesequiser2\target\classes started by celiors in C:\Users\celiors\IdeaProjects\acreditesequiser2)
+2025-12-01T08:46:22.115-03:00  INFO 22660 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-12-01T08:46:23.774-03:00  INFO 22660 --- [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-12-01T08:46:23.774-03:00  INFO 22660 --- [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2025-12-01T08:46:23.820-03:00  INFO 22660 --- [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-12-01T08:46:24.368-03:00  INFO 22660 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-12-01T08:46:24.473-03:00  INFO 22660 --- [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7d0e6117
+2025-12-01T08:46:24.474-03:00  INFO 22660 --- [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-12-01T08:46:24.512-03:00  WARN 22660 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-12-01T08:46:25.631-03:00  WARN 22660 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-12-01T08:46:26.301-03:00  INFO 22660 --- [restartedMain] com.site.AcrediteSeQuiserApplication     : Started AcrediteSeQuiserApplication in 4.573 seconds (process running for 5.044)
+2025-12-01T08:46:35.402-03:00  INFO 22660 --- [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-01T09:00:00.025-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : ------------------------------------------------------------
+2025-12-01T09:00:00.025-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : INICIANDO TAREFA AGENDADA: Verificação de assinaturas a vencer...
+2025-12-01T09:00:00.025-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : Procurando usuários com vencimento em 7 dias (2025-12-08).
+2025-12-01T09:00:00.034-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : Nenhum usuário encontrado com assinatura vencendo em 2025-12-08.
+2025-12-01T09:00:00.034-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : Procurando usuários com vencimento em 3 dias (2025-12-04).
+2025-12-01T09:00:00.037-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : Nenhum usuário encontrado com assinatura vencendo em 2025-12-04.
+2025-12-01T09:00:00.037-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : TAREFA AGENDADA CONCLUÍDA.
+2025-12-01T09:00:00.037-03:00  INFO 22660 --- [scheduling-1] com.site.services.ScheduledTaskService   : ------------------------------------------------------------
