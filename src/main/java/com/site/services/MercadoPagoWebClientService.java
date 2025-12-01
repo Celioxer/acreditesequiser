@@ -1,5 +1,7 @@
 package com.site.services;
 
+import com.site.dto.PaymentRequestDTO;
+import com.site.models.Usuario;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
@@ -29,43 +31,49 @@ public class MercadoPagoWebClientService {
                 .build();
     }
 
-    // --- Métodos Auxiliares ---
     private String getFirstName(String fullName) {
-        if (fullName == null || fullName.trim().isEmpty()) { return ""; }
-        String[] parts = fullName.trim().split("\\s+", 2);
-        return parts[0];
+        if (fullName == null || fullName.trim().isEmpty()) return "";
+        return fullName.trim().split("\\s+")[0];
     }
 
     private String getLastName(String fullName) {
-        if (fullName == null || fullName.trim().isEmpty()) { return ""; }
+        if (fullName == null || fullName.trim().isEmpty()) return "";
         String[] parts = fullName.trim().split("\\s+", 2);
         return parts.length > 1 ? parts[1] : "";
     }
 
     // ==========================================================
-    // ✅ PIX
+    // 1. PAGAMENTO INICIAL (VALIDAÇÃO DO CARTÃO)
     // ==========================================================
-    public Mono<Map<String, Object>> iniciarPagamentoPix(
-            com.site.models.Usuario usuario,
-            String descricao,
-            BigDecimal valor
+    public Mono<Map<String, Object>> criarPagamentoInicial(
+            Usuario usuario,
+            PaymentRequestDTO dto
     ) {
         Map<String, Object> body = new HashMap<>();
-        body.put("transaction_amount", valor);
-        body.put("description", descricao);
-        body.put("payment_method_id", "pix");
+        body.put("transaction_amount", dto.getValor());
+        body.put("token", dto.getToken());
+        body.put("description", dto.getDescricao());
+        body.put("installments", dto.getInstallments() != null ? dto.getInstallments() : 1);
 
+        if (dto.getPaymentMethodId() != null && !dto.getPaymentMethodId().isEmpty()) {
+            body.put("payment_method_id", dto.getPaymentMethodId());
+        }
+
+        if (dto.getIssuerId() != null) {
+            body.put("issuer_id", dto.getIssuerId());
+        }
+
+        // payer — CORRETO para /v1/payments
         Map<String, Object> payerMap = new HashMap<>();
-        payerMap.put("email", usuario.getEmail() != null ? usuario.getEmail() : "");
-        payerMap.put("first_name", getFirstName(usuario.getNome()));
-        payerMap.put("last_name", getLastName(usuario.getNome()));
+        payerMap.put("email", dto.getPayer().getEmail());
         payerMap.put("identification", Map.of(
-                "type", "CPF",
-                "number", usuario.getCpf() != null ? usuario.getCpf() : ""
+                "type", dto.getPayer().getIdentification().getType(),
+                "number", dto.getPayer().getIdentification().getNumber()
         ));
         body.put("payer", payerMap);
 
         body.put("external_reference", usuario.getId().toString());
+        body.put("binary_mode", true);
 
         return webClient.post()
                 .uri("/v1/payments")
@@ -73,59 +81,20 @@ public class MercadoPagoWebClientService {
                 .header("X-Idempotency-Key", UUID.randomUUID().toString())
                 .bodyValue(body)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .doOnError(err -> System.out.println("Erro MercadoPago (cartão): " + err.getMessage()));
     }
 
     // ==========================================================
-    // ✅ CARTÃO ÚNICO
-    // ==========================================================
-    public Mono<Map<String, Object>> iniciarPagamentoCartao(
-            com.site.models.Usuario usuario,
-            String token,
-            String descricao,
-            BigDecimal valor,
-            Integer installments,
-            String paymentMethodId,
-            Integer issuerId
-    ) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("transaction_amount", valor);
-        body.put("token", token);
-        body.put("description", descricao);
-        body.put("installments", installments);
-        body.put("payment_method_id", paymentMethodId);
-
-        Map<String, Object> payerMap = new HashMap<>();
-        payerMap.put("email", usuario.getEmail() != null ? usuario.getEmail() : "");
-        payerMap.put("first_name", getFirstName(usuario.getNome()));
-        payerMap.put("last_name", getLastName(usuario.getNome()));
-        payerMap.put("identification", Map.of(
-                "type", "CPF",
-                "number", usuario.getCpf() != null ? usuario.getCpf() : ""
-        ));
-        body.put("payer", payerMap);
-
-        body.put("external_reference", usuario.getId().toString());
-        if (issuerId != null) { body.put("issuer_id", issuerId); }
-
-        return webClient.post()
-                .uri("/v1/payments")
-                .header("Authorization", "Bearer " + accessToken)
-                .header("X-Idempotency-Key", UUID.randomUUID().toString())
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
-    }
-
-    // ==========================================================
-    // ⭐️ CRIAR ASSINATURA (CORRIGIDO: Sem forçar 'Authorized')
+    // 2. CRIAR ASSINATURA (PREAPPROVAL)
     // ==========================================================
     public Mono<Map<String, Object>> criarAssinatura(
-            com.site.models.Usuario usuario,
+            Usuario usuario,
             String cardToken,
             String descricao,
             BigDecimal valor
     ) {
+
         Map<String, Object> autoRecurring = new HashMap<>();
         autoRecurring.put("frequency", 1);
         autoRecurring.put("frequency_type", "months");
@@ -135,13 +104,10 @@ public class MercadoPagoWebClientService {
         Map<String, Object> body = new HashMap<>();
         body.put("reason", descricao);
         body.put("auto_recurring", autoRecurring);
-        body.put("payer_email", usuario.getEmail() != null ? usuario.getEmail() : "");
+        body.put("payer_email", usuario.getEmail());
         body.put("card_token_id", cardToken);
         body.put("external_reference", usuario.getId().toString());
-
-        // ❌ REMOVIDO: body.put("status", "Authorized");
-        // Deixamos o Mercado Pago decidir o status inicial (pode ser 'pending' se exigir 3DS).
-
+        body.put("status", "authorized");
         body.put("back_url", this.baseUrl + "/pagamento-sucesso");
 
         return webClient.post()
@@ -153,10 +119,41 @@ public class MercadoPagoWebClientService {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
     }
 
+    // ==========================================================
+    // 3. PIX
+    // ==========================================================
+    public Mono<Map<String, Object>> iniciarPagamentoPix(
+            Usuario usuario,
+            String descricao,
+            BigDecimal valor
+    ) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("transaction_amount", valor);
+        body.put("description", descricao);
+        body.put("payment_method_id", "pix");
 
-    // ==========================================================
-    // ✅ CONSULTAR PAGAMENTO (PIX / Cartão)
-    // ==========================================================
+        Map<String, Object> payer = new HashMap<>();
+        payer.put("email", usuario.getEmail());
+        payer.put("first_name", getFirstName(usuario.getNome()));
+        payer.put("last_name", getLastName(usuario.getNome()));
+        payer.put("identification", Map.of(
+                "type", "CPF",
+                "number", usuario.getCpf()
+        ));
+
+        body.put("payer", payer);
+        body.put("external_reference", usuario.getId().toString());
+
+        return webClient.post()
+                .uri("/v1/payments")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("X-Idempotency-Key", UUID.randomUUID().toString())
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
+    // CONSULTAS --------------------------------
     public Mono<Map<String, Object>> consultarPagamento(String paymentId) {
         return webClient.get()
                 .uri("/v1/payments/" + paymentId)
@@ -165,9 +162,6 @@ public class MercadoPagoWebClientService {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
     }
 
-    // ==========================================================
-    // ✅ CONSULTAR ASSINATURA (preapproval)
-    // ==========================================================
     public Mono<Map<String, Object>> consultarPreapproval(String preapprovalId) {
         return webClient.get()
                 .uri("/preapproval/" + preapprovalId)

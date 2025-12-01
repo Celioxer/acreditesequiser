@@ -159,7 +159,7 @@
     // Variáveis do Thymeleaf
     const valorPagamento = [[${valor}]];
     const descricaoPagamento = [[${descricao}]];
-    // Chave pública de produção (a mesma que você já configurou)
+
     const publicKey = 'APP_USR-6b43d260-2d40-4a94-807d-80a43ee05a7c';
 
     console.log('Inicializando Mercado Pago com valor:', valorPagamento);
@@ -181,7 +181,9 @@
             identificationType: { id: "form-checkout__identificationType", placeholder: "Tipo de documento" },
             identificationNumber: { id: "form-checkout__identificationNumber", placeholder: "Número do documento" },
         },
+
         callbacks: {
+
             onFormMounted: error => {
                 if (error) return console.warn("Falha ao montar o formulário:", error);
                 console.log("Formulário montado com sucesso.");
@@ -189,96 +191,65 @@
 
             onSubmit: event => {
                 event.preventDefault();
+
                 const submitButton = document.getElementById('form-checkout__submit');
                 submitButton.disabled = true;
                 document.getElementById('form-checkout').classList.add('loading');
 
-                const {
-                    paymentMethodId,
-                    token,
-                    installments,
-                    issuerId,
-                } = cardForm.getCardFormData();
+                const data = cardForm.getCardFormData();
+
+                const payload = {
+                    token: data.token,
+                    paymentMethodId: data.paymentMethodId,
+                    issuerId: Number(data.issuerId),
+                    installments: Number(data.installments),
+                    valor: Number(valorPagamento),
+                    descricao: descricaoPagamento,
+
+                    deviceId: document.getElementById("deviceId").value,
+
+                    cardholder: {
+                        name: document.getElementById("form-checkout__cardholderName").value,
+                        identification: {
+                            type: data.identificationType,
+                            number: data.identificationNumber
+                        }
+                    },
+
+                    payer: {
+                        email: document.getElementById('form-checkout__cardholderEmail').value,
+                        identification: {
+                            type: data.identificationType,
+                            number: data.identificationNumber
+                        }
+                    }
+                };
 
                 fetch("/process-card-payment", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        token: token,
-                        paymentMethodId: paymentMethodId,
-                        installments: Number(installments),
-                        issuerId: Number(issuerId),
-                        valor: valorPagamento.toString(),
-                        descricao: descricaoPagamento,
-                        payer: {
-                            email: document.getElementById('form-checkout__cardholderEmail').value,
-                            identification: {
-                                type: document.getElementById('form-checkout__identificationType').value,
-                                number: document.getElementById('form-checkout__identificationNumber').value
-                            }
-                         }
-                    })
+                    body: JSON.stringify(payload)
                 })
                 .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(errorData => {
-                            throw errorData;
-                        });
-                    }
+                    if (!response.ok)
+                        return response.json().then(err => { throw err; });
+
                     return response.json();
                 })
                 .then(data => {
-                    console.log("Resposta da criação da assinatura:", data);
+                    console.log("Resposta da assinatura:", data);
 
                     if (data.status === 'authorized') {
                         window.location.href = '/pagamento-sucesso';
-                    } else if (data.status === 'in_process' || data.status === 'pending') {
-                        window.location.href = '/payment-pending';
                     } else {
-                        let message = 'Falha ao criar assinatura.';
-                        if (data.message) {
-                            message = data.message;
-                        } else if (data.cause && data.cause.length > 0 && data.cause[0].description) {
-                            message = data.cause[0].description;
-                        }
-                        throw new Error(message);
+                        window.location.href = '/payment-pending';
                     }
                 })
                 .catch(error => {
                     console.error("Erro ao processar pagamento:", error);
-                    let errorMessage = "Ocorreu um erro desconhecido.";
 
-                    if (error.message) {
-                        // --- TRATAMENTO ESPECÍFICO DO ERRO DE STATUS PENDENTE ---
-                        if (error.message.includes("status pending")) {
-                            errorMessage = "A validação do seu cartão está pendente no banco. Por favor, aguarde alguns minutos ou tente usar outro cartão.";
-                        } else {
-                            // Outros erros
-                            switch (error.code) {
-                                case 'cc_rejected_bad_filled_security_code':
-                                    errorMessage = "O código de segurança (CVV) está incorreto.";
-                                    break;
-                                case 'cc_rejected_high_risk':
-                                    errorMessage = "O pagamento foi recusado pelo sistema de segurança. Tente outro cartão.";
-                                    break;
-                                case 'cc_rejected_insufficient_amount':
-                                    errorMessage = "O cartão não possui saldo suficiente.";
-                                    break;
-                                case 'cc_rejected_bad_filled_date':
-                                    errorMessage = "A data de validade está incorreta.";
-                                    break;
-                                case 'cc_rejected_other_reason':
-                                    errorMessage = "O banco emissor recusou o pagamento.";
-                                    break;
-                                default:
-                                    errorMessage = error.message;
-                            }
-                        }
-                    } else if (error.error) {
-                        errorMessage = error.error;
-                    }
+                    alert("Erro no pagamento: " + (error.message || JSON.stringify(error)));
 
-                    alert("Atenção: " + errorMessage);
                     submitButton.disabled = false;
                     document.getElementById('form-checkout').classList.remove('loading');
                 });
@@ -288,9 +259,10 @@
                 console.error("Erros de validação:", errors);
                 const errorMessages = errors.map(error => error.message).join('\n');
                 alert("Corrija os seguintes erros:\n" + errorMessages);
-            },
-        },
+            }
+        }
     });
 </script>
+
 </body>
 </html>

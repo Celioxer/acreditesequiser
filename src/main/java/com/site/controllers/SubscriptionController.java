@@ -36,11 +36,9 @@ public class SubscriptionController {
         this.usuarioService = usuarioService;
     }
 
-    // ============================================================
-    // ✅ NOVO ENDPOINT DE VERIFICAÇÃO DE STATUS
-    // (Necessário para a automação da página do PIX)
-    // ============================================================
-
+    // ------------------------------------------------------------
+    // STATUS DO USUÁRIO
+    // ------------------------------------------------------------
     @GetMapping("/api/user/status")
     @ResponseBody
     public Mono<ResponseEntity<Map<String, String>>> getUsuarioStatus(Authentication authentication) {
@@ -52,28 +50,27 @@ public class SubscriptionController {
             Usuario usuario = usuarioService.findByUsername(authentication.getName())
                     .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
-            boolean acessoValido = usuario.getAcessoValidoAte() != null &&
-                    usuario.getAcessoValidoAte().isAfter(LocalDateTime.now());
+            boolean acessoValido =
+                    usuario.getAcessoValidoAte() != null &&
+                            usuario.getAcessoValidoAte().isAfter(LocalDateTime.now());
 
-            if (acessoValido && usuario.getRole() == Usuario.Role.SUBSCRIBER) {
-                return Mono.just(ResponseEntity.ok(Map.of("status", "APPROVED")));
-            } else {
-                return Mono.just(ResponseEntity.ok(Map.of("status", "PENDING")));
-            }
+            return Mono.just(ResponseEntity.ok(
+                    Map.of("status", acessoValido ? "APPROVED" : "PENDING")
+            ));
 
         } catch (Exception e) {
-            logger.error("Erro ao verificar status do usuário", e);
+            logger.error("Erro ao verificar status", e);
             return Mono.just(ResponseEntity.status(500).body(Map.of("status", "ERROR")));
         }
     }
 
-    // ============================================================
-    // ✅ CHECKOUT INICIAL (PIX ou CARTÃO)
-    // ============================================================
+    // ------------------------------------------------------------
+    // CHECKOUT
+    // ------------------------------------------------------------
     @GetMapping("/checkout")
     public String checkout(
-            @RequestParam("valor") BigDecimal valor,
-            @RequestParam("paymentMethod") String paymentMethod,
+            @RequestParam BigDecimal valor,
+            @RequestParam String paymentMethod,
             Authentication authentication,
             RedirectAttributes redirectAttributes,
             Model model) {
@@ -82,131 +79,42 @@ public class SubscriptionController {
             redirectAttributes.addFlashAttribute("error", "Valor mínimo é R$ 10,00.");
             return "redirect:/subscription";
         }
-        Optional<Usuario> optUsuario = usuarioService.findByUsername(authentication.getName());
-        if (optUsuario.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Erro: usuário não encontrado.");
+
+        Optional<Usuario> optUser = usuarioService.findByUsername(authentication.getName());
+        if (optUser.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Usuário não encontrado.");
             return "redirect:/subscription";
         }
-        Usuario usuario = optUsuario.get();
-        String descricao = "Apoio Mensal - Novo Pagamento";
 
-        if ("pix".equals(paymentMethod)) {
-            model.addAttribute("valor", valor);
-            return "auth/pix_payment"; // Renderiza a página do QR Code
-        }
+        model.addAttribute("valor", valor);
+        model.addAttribute("descricao", "Assinatura Mensal");
 
-        if ("card".equals(paymentMethod)) {
-            model.addAttribute("valor", valor);
-            model.addAttribute("descricao", descricao);
-            return "auth/card_payment";
-        }
+        if (paymentMethod.equals("pix")) return "auth/pix_payment";
+        if (paymentMethod.equals("card")) return "auth/card_payment";
 
         redirectAttributes.addFlashAttribute("error", "Método inválido.");
         return "redirect:/subscription";
     }
 
-    // ============================================================
-    // ✅ RENOVAÇÃO DE ASSINATURA (CORRIGIDO)
-    // ============================================================
-    @GetMapping("/assinatura/renovar")
-    public String renovarAssinatura(
-            @RequestParam("valor") BigDecimal valor,
-            @RequestParam("paymentMethod") String paymentMethod,
-            Authentication authentication,
-            RedirectAttributes redirectAttributes,
-            Model model) {
-
-        if (valor.compareTo(new BigDecimal("10.00")) < 0) {
-            redirectAttributes.addFlashAttribute("error", "Valor mínimo é R$ 10,00.");
-            return "redirect:/conteudo-protegido";
-        }
-        Optional<Usuario> optUsuario = usuarioService.findByUsername(authentication.getName());
-        if (optUsuario.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Erro: usuário não encontrado.");
-            return "redirect:/logout";
-        }
-        Usuario usuario = optUsuario.get();
-        String descricao = "Apoio Mensal - Renovação de Assinatura";
-
-        // --- INÍCIO DA CORREÇÃO ---
-        // Agora o fluxo de renovação renderiza a página correta em vez de redirecionar para o JSON
-        if ("pix".equals(paymentMethod)) {
-            model.addAttribute("valor", valor);
-            return "auth/pix_payment"; // Renderiza a página do QR Code
-        }
-        // --- FIM DA CORREÇÃO ---
-
-        if ("card".equals(paymentMethod)) {
-            model.addAttribute("valor", valor);
-            model.addAttribute("descricao", descricao);
-            return "auth/card_payment";
-        }
-        redirectAttributes.addFlashAttribute("error", "Método inválido.");
-        return "redirect:/conteudo-protegido";
-    }
-
-
-    // ============================================================
-    // ✅ PROCESSAR PIX (Corrigido com Bloco Único de Erro)
-    // ============================================================
-
-    @GetMapping("/processar-pix")
-    @ResponseBody
-    public Mono<ResponseEntity<Map<String, Object>>> processarPix(
-            @RequestParam BigDecimal valor,
-            Authentication authentication) {
-
-        Optional<Usuario> optUser = usuarioService.findByUsername(authentication.getName());
-        if (optUser.isEmpty()) {
-            return Mono.just(ResponseEntity.badRequest().body(Map.of("error", "Usuário não encontrado")));
-        }
-
-        Usuario usuario = optUser.get();
-        String descricao = "Apoio Mensal";
-
-        return mercadoPagoWebClientService
-                .iniciarPagamentoPix(usuario, descricao, valor)
-                .map(resp -> ResponseEntity.ok((Map<String, Object>) resp)) // SUCESSO
-                .onErrorResume(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        // ERRO 4xx/5xx vindo do Mercado Pago
-                        WebClientResponseException ex = (WebClientResponseException) throwable;
-                        logger.warn("Erro do Mercado Pago ao criar PIX: {} - Body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
-                        return Mono.just(ResponseEntity
-                                .status(ex.getStatusCode())
-                                .body(ex.getResponseBodyAs(Map.class)));
-                    } else {
-                        // ERRO 500 Interno (NullPointer, etc)
-                        logger.error("Erro interno ao processar PIX: {}", throwable.getMessage());
-                        return Mono.just(ResponseEntity
-                                .status(500)
-                                .body(Map.of("error", "Erro interno no servidor.")));
-                    }
-                });
-    }
-
-
-    // ============================================================
-    // ✅ PROCESSAR PAGAMENTO COM CARTÃO (Corrigido com Bloco Único de Erro)
-    // ============================================================
-
+    // ------------------------------------------------------------
+    // PROCESSAR ASSINATURA NO CARTÃO
+    // ------------------------------------------------------------
     @PostMapping("/process-card-payment")
     @ResponseBody
     public Mono<ResponseEntity<Map<String, Object>>> processCardPayment(
             @RequestBody PaymentRequestDTO paymentRequest,
-            Authentication authentication) {
+            Authentication authentication
+    ) {
 
         if (paymentRequest.getValor().compareTo(new BigDecimal("10.00")) < 0) {
-            return Mono.just(ResponseEntity.badRequest().body(
-                    Map.of("error", "Valor mínimo é R$ 10,00.")
-            ));
+            return Mono.just(ResponseEntity.badRequest()
+                    .body(Map.of("error", "Valor mínimo é R$ 10,00.")));
         }
 
         Optional<Usuario> optUser = usuarioService.findByUsername(authentication.getName());
         if (optUser.isEmpty()) {
-            return Mono.just(ResponseEntity.status(500).body(
-                    Map.of("error", "Usuário não encontrado.")
-            ));
+            return Mono.just(ResponseEntity.status(500)
+                    .body(Map.of("error", "Usuário não encontrado.")));
         }
 
         Usuario usuario = optUser.get();
@@ -218,59 +126,66 @@ public class SubscriptionController {
                         paymentRequest.getDescricao(),
                         paymentRequest.getValor()
                 )
-                .map(resp -> ResponseEntity.ok((Map<String, Object>) resp)) // SUCESSO
+                .map(resp -> ResponseEntity.ok((Map<String, Object>) resp))
                 .onErrorResume(throwable -> {
-                    if (throwable instanceof WebClientResponseException) {
-                        // ERRO 4xx/5xx vindo do Mercado Pago
-                        WebClientResponseException ex = (WebClientResponseException) throwable;
-                        logger.warn("Erro do Mercado Pago ao criar assinatura: {} - Body: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+
+                    if (throwable instanceof WebClientResponseException ex) {
+                        logger.warn("Erro Mercado Pago (ASSINATURA): {} - {}",
+                                ex.getStatusCode(), ex.getResponseBodyAsString());
+
                         return Mono.just(ResponseEntity
                                 .status(ex.getStatusCode())
                                 .body(ex.getResponseBodyAs(Map.class)));
-                    } else {
-                        // ERRO 500 Interno (NullPointer, etc)
-                        logger.error("Erro interno ao processar pagamento com cartão: {}", throwable.getMessage());
-                        return Mono.just(ResponseEntity
-                                .status(500)
-                                .body(Map.of("error", "Erro interno no servidor.")));
                     }
+
+                    logger.error("Erro interno ao criar assinatura", throwable);
+
+                    return Mono.just(ResponseEntity.status(500)
+                            .body(Map.of("error", "Erro interno no servidor.")));
                 });
     }
 
-    // ============================================================
-    // ✅ PÁGINAS (Inalteradas)
-    // ============================================================
+    // ------------------------------------------------------------
+    // PROCESSAR PIX
+    // ------------------------------------------------------------
+    @GetMapping("/processar-pix")
+    @ResponseBody
+    public Mono<ResponseEntity<Map<String, Object>>> processarPix(
+            @RequestParam BigDecimal valor,
+            Authentication authentication) {
 
+        Optional<Usuario> optUser = usuarioService.findByUsername(authentication.getName());
+        if (optUser.isEmpty()) {
+            return Mono.just(ResponseEntity.badRequest()
+                    .body(Map.of("error", "Usuário não encontrado")));
+        }
+
+        Usuario usuario = optUser.get();
+
+        return mercadoPagoWebClientService
+                .iniciarPagamentoPix(usuario, "Assinatura Mensal", valor)
+                .map(resp -> ResponseEntity.ok((Map<String, Object>) resp))
+                .onErrorResume((Throwable throwable) -> {
+
+                    if (throwable instanceof WebClientResponseException ex) {
+                        logger.warn("Erro MP PIX: {} - {}",
+                                ex.getStatusCode(), ex.getResponseBodyAsString());
+                        return Mono.just(ResponseEntity.status(ex.getStatusCode())
+                                .body(ex.getResponseBodyAs(Map.class)));
+                    }
+
+                    logger.error("Erro interno PIX: {}", throwable.getMessage(), throwable);
+                    return Mono.just(ResponseEntity.status(500)
+                            .body(Map.of("error", "Erro interno no servidor.")));
+                });
+    }
+
+    // ------------------------------------------------------------
+    // PÁGINAS
+    // ------------------------------------------------------------
     @GetMapping("/pagamento-sucesso")
-    public String showSuccessPage() { return "auth/payment-success"; }
+    public String success() { return "auth/payment-success"; }
 
     @GetMapping("/subscription")
-    public String subscriptionPage() { return "auth/subscription"; }
-
-    @GetMapping("/payment-pending")
-    public String showPendingPage() { return "auth/payment-pending"; }
-
-    @GetMapping("/episodios")
-    public String episodios() { return "episodios"; }
-
-    @GetMapping("/conteudo-protegido")
-    public String conteudoProtegido(
-            Authentication auth,
-            Model model,
-            RedirectAttributes attrs) {
-
-        Optional<Usuario> opt = usuarioService.findByUsername(auth.getName());
-        if (opt.isEmpty()) {
-            attrs.addFlashAttribute("error", "Usuário não encontrado.");
-            return "redirect:/subscription";
-        }
-        Usuario usuario = opt.get();
-        if (usuario.getAcessoValidoAte() != null &&
-                usuario.getAcessoValidoAte().isAfter(LocalDateTime.now())) {
-            model.addAttribute("usuario", usuario);
-            return "protected-content-page";
-        }
-        attrs.addFlashAttribute("error", "Assinatura expirada.");
-        return "redirect:/subscription";
-    }
+    public String subscription() { return "auth/subscription"; }
 }

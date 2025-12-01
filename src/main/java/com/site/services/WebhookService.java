@@ -2,7 +2,7 @@ package com.site.services;
 
 import com.site.models.PaymentHistory;
 import com.site.repositories.PaymentHistoryRepository;
-import com.site.models.Usuario;
+// import com.site.models.Usuario; // Se precisar importar
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,6 +44,7 @@ public class WebhookService {
         }
 
         try {
+            // Busca detalhes no Mercado Pago
             Map<String, Object> response = mercadoPagoWebClientService.consultarPagamento(paymentId).block();
 
             if (response == null) {
@@ -53,8 +54,7 @@ public class WebhookService {
 
             logger.info("🔎 Processando 'payment' ID: {}. Detalhes: {}", paymentId, response);
 
-            // --- INÍCIO DA CORREÇÃO DO NULLPOINTEREXCEPTION ---
-
+            // --- PROTEÇÃO CONTRA NULL POINTER EXCEPTION ---
             Object statusObj = response.get("status");
             if (statusObj == null) {
                 logger.warn("Webhook 'payment' ID: {} recebido sem o campo 'status'. Ignorado.", paymentId);
@@ -64,26 +64,25 @@ public class WebhookService {
 
             Object externalRefObj = response.get("external_reference");
             if (externalRefObj == null) {
-                logger.warn("Webhook 'payment' ID: {} recebido sem o campo 'external_reference'. Ignorado.", paymentId);
+                logger.warn("Webhook 'payment' ID: {} sem 'external_reference'. Ignorado.", paymentId);
                 return;
             }
-            String externalRef = externalRefObj.toString(); // Esta era a antiga LINHA 58
+            String externalRef = externalRefObj.toString();
+            // ----------------------------------------------
 
-            // --- FIM DA CORREÇÃO DO NULLPOINTEREXCEPTION ---
-
-            // --- TRATAMENTO PARA GARANTIR QUE external_reference É UM ID DE USUÁRIO ---
+            // Tenta converter external_reference para ID de usuário
             Long usuarioId;
             try {
                 usuarioId = Long.parseLong(externalRef);
             } catch (NumberFormatException e) {
-                logger.warn("Webhook 'payment' recebido com external_reference inválida (não é um número): '{}'. Ignorando.", externalRef);
-                return; // Para de processar este webhook, pois não é de um usuário
+                // Se for "Recurring payment validation", cai aqui e é ignorado corretamente.
+                logger.warn("Webhook 'payment' com external_reference inválida: '{}'. Ignorando.", externalRef);
+                return;
             }
-            // --- FIM DO TRATAMENTO ---
 
             if ("approved".equals(status)) {
 
-                // Extração segura de campos aninhados:
+                // Extração segura de dados
                 Map<String, Object> paymentMethod = (Map<String, Object>) response.get("payment_method");
                 String paymentMethodId = (paymentMethod != null && paymentMethod.get("id") != null)
                         ? paymentMethod.get("id").toString() : "UNKNOWN";
@@ -98,12 +97,37 @@ public class WebhookService {
 
                 LocalDateTime dateApproved = LocalDateTime.now();
                 if (response.get("date_approved") != null) {
-                    String dateApprovedStr = response.get("date_approved").toString();
-                    dateApproved = OffsetDateTime.parse(dateApprovedStr).toLocalDateTime();
+                    try {
+                        String dateApprovedStr = response.get("date_approved").toString();
+                        dateApproved = OffsetDateTime.parse(dateApprovedStr).toLocalDateTime();
+                    } catch (Exception e) {
+                        logger.warn("Erro ao parsear data, usando now()", e);
+                    }
                 }
 
-                Integer installments = response.get("installments") != null ? ((Number) response.get("installments")).intValue() : null;
+                Integer installments = response.get("installments") != null
+                        ? ((Number) response.get("installments")).intValue()
+                        : 1;
 
+                // =========================================================
+                // PASSO 2 DO FLUXO DE CARTÃO: CRIAR A ASSINATURA
+                // =========================================================
+                if ("credit_card".equalsIgnoreCase(paymentMethodId) || "credit_card".equalsIgnoreCase((String) response.get("payment_type_id"))) {
+                    logger.info("Pagamento de cartão aprovado. Tentando criar assinatura para usuário {}...", usuarioId);
+
+                    // Se o seu fluxo principal já cria a assinatura no Controller (quando approved),
+                    // aqui nós apenas registramos o pagamento e liberamos o acesso.
+                    // O MP vai cobrar a assinatura mês que vem automaticamente.
+
+                    // IMPORTANTE: Se o pagamento inicial foi criado com sucesso no controller,
+                    // a assinatura JÁ DEVERIA ter sido criada lá (se foi approved imediato).
+                    // Se ficou 'in_process' e aprovou agora, criar a assinatura aqui seria ideal,
+                    // mas precisaria do 'card_token', que o webhook NÃO TRAZ.
+                    // Nesse caso, o usuário terá acesso por 30 dias (pelo pagamento avulso aprovado),
+                    // mas terá que renovar manualmente mês que vem. É um compromisso aceitável.
+                }
+
+                // Salva histórico
                 PaymentHistory ph = new PaymentHistory(
                         paymentId,
                         usuarioId,
@@ -116,6 +140,7 @@ public class WebhookService {
                 );
                 paymentHistoryRepository.save(ph);
 
+                // Libera acesso
                 usuarioService.liberarAssinatura(usuarioId, 30);
                 logger.info("✅ Acesso liberado/renovado para usuário ID: {}", usuarioId);
 
@@ -124,14 +149,13 @@ public class WebhookService {
             }
 
         } catch (Exception e) {
-            logger.error("Erro ao processar notificação de pagamento {}. Transação será revertida.", paymentId, e);
-            throw new RuntimeException("Falha ao processar pagamento " + paymentId, e);
+            logger.error("Erro ao processar notificação de pagamento {}", paymentId, e);
+            // Não lançamos exceção para não travar o webhook do MP em loop infinito de retry
         }
     }
 
     // =====================================================
-    // ✅ PROCESSAR MUDANÇA DE STATUS DA ASSINATURA (type=preapproval)
-    //    (Corrigido para segurança contra NPE)
+    // ✅ PROCESSAR MUDANÇA DE STATUS DA ASSINATURA (preapproval)
     // =====================================================
     @Transactional
     public void processSubscriptionNotification(String preapprovalId) {
@@ -140,54 +164,42 @@ public class WebhookService {
             Map<String, Object> response = mercadoPagoWebClientService.consultarPreapproval(preapprovalId).block();
 
             if (response == null) {
-                logger.error("Resposta nula do Mercado Pago para o preapprovalId: {}", preapprovalId);
+                logger.error("Resposta nula do Mercado Pago para preapprovalId: {}", preapprovalId);
                 return;
             }
 
             logger.info("🔎 Processando 'preapproval' ID: {}. Detalhes: {}", preapprovalId, response);
 
-            // --- INÍCIO DA CORREÇÃO DO NULLPOINTEREXCEPTION (status e external_reference) ---
-
+            // Proteção contra NPE
             Object statusObj = response.get("status");
-            if (statusObj == null) {
-                logger.warn("Webhook 'preapproval' ID: {} recebido sem o campo 'status'. Ignorado.", preapprovalId);
-                return;
-            }
+            if (statusObj == null) return;
             String status = statusObj.toString();
 
             Object externalRefObj = response.get("external_reference");
-            if (externalRefObj == null) {
-                logger.warn("Webhook 'preapproval' ID: {} recebido sem o campo 'external_reference'. Ignorado.", preapprovalId);
-                return;
-            }
-            String externalRef = externalRefObj.toString();
+            if (externalRefObj == null) return;
 
-            // --- FIM DA CORREÇÃO DO NULLPOINTEREXCEPTION ---
-
-            // --- TRATAMENTO PARA GARANTIR QUE external_reference É UM ID DE USUÁRIO ---
             Long usuarioId;
             try {
-                usuarioId = Long.parseLong(externalRef);
+                usuarioId = Long.parseLong(externalRefObj.toString());
             } catch (NumberFormatException e) {
-                logger.warn("Webhook 'preapproval' recebido com external_reference inválida (não é um número): '{}'. Ignorando.", externalRef);
-                return; // Para de processar este webhook
+                return;
             }
-            // --- FIM DO TRATAMENTO ---
 
             switch (status) {
                 case "paused":
                 case "cancelled":
                     usuarioService.removerAssinatura(usuarioId);
-                    logger.info("⚠ Assinatura {} cancelada/pausada para usuário ID: {}", preapprovalId, usuarioId);
+                    logger.info("⚠ Assinatura {} cancelada/pausada. Acesso removido para usuário: {}", preapprovalId, usuarioId);
                     break;
                 case "authorized":
-                default:
-                    logger.info("Assinatura {} com status: {}. Nenhuma ação necessária.", preapprovalId, status);
+                    // O acesso geralmente é liberado pelo pagamento (payment), mas podemos reforçar aqui
+                    // usuarioService.liberarAssinatura(usuarioId, 30);
+                    logger.info("Assinatura {} ativa/autorizada.", preapprovalId);
+                    break;
             }
 
         } catch (Exception e) {
-            logger.error("Erro ao processar notificação de assinatura {}. Transação será revertida.", preapprovalId, e);
-            throw new RuntimeException("Falha ao processar assinatura " + preapprovalId, e);
+            logger.error("Erro ao processar notificação de assinatura {}", preapprovalId, e);
         }
     }
 }
