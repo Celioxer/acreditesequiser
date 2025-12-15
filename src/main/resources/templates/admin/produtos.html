@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: common_head('Gerenciar Produtos')}"></head>
+<body>
+<div class="sticky-footer-layout">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-warning mb-0">Gerenciamento de Estoque</h1>
+            <a href="/loja" class="btn btn-outline-light btn-sm"><i class="fas fa-store"></i> Ver Loja</a>
+        </div>
+
+        <!-- Mensagens de Feedback -->
+        <div th:if="${success}" class="alert alert-success shadow-sm" th:text="${success}"></div>
+
+        <!-- Formulário de Cadastro/Edição -->
+        <div class="card bg-dark border-secondary mb-5 shadow-lg">
+            <div class="card-header border-secondary text-white bg-secondary bg-opacity-25">
+                <h5 class="mb-0"><i class="fas fa-box-open me-2"></i>Cadastrar / Editar Produto</h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/produtos/salvar}" th:object="${novoProduto}" method="post">
+                    <input type="hidden" th:field="*{id}" />
+
+                    <!-- Linha 1: Dados Básicos -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="text-light form-label">Nome do Produto</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" th:field="*{nome}" required placeholder="Ex: Caneca Oficial">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-light form-label">Preço (R$)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-secondary border-secondary text-light">R$</span>
+                                <input type="number" step="0.01" class="form-control bg-dark text-light border-secondary" th:field="*{preco}" required placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-light form-label">Estoque Atual</label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" th:field="*{estoque}" required placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: Imagem -->
+                    <div class="mb-3">
+                        <label class="text-light form-label">URL da Imagem</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" th:field="*{imagemUrl}" placeholder="https://exemplo.com/imagem.jpg">
+                        <small class="text-muted">Recomendado: Imagens quadradas (ex: 500x500px).</small>
+                    </div>
+
+                    <!-- Linha 3: Dados para Frete (Necessário para cálculo automático) -->
+                    <div class="card bg-secondary bg-opacity-10 border-0 mb-3">
+                        <div class="card-body py-2">
+                            <h6 class="text-warning mb-3" style="font-size: 0.9rem;">Dados para Cálculo de Frete</h6>
+                            <div class="row g-3">
+                                <div class="col-6 col-md-3">
+                                    <label class="text-light form-label small">Peso (kg)</label>
+                                    <input type="number" step="0.001" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="0.500">
+                                    <!-- Adicione th:field="*{peso}" quando atualizar a entidade -->
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="text-light form-label small">Altura (cm)</label>
+                                    <input type="number" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="10">
+                                    <!-- Adicione th:field="*{altura}" quando atualizar a entidade -->
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="text-light form-label small">Largura (cm)</label>
+                                    <input type="number" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="20">
+                                    <!-- Adicione th:field="*{largura}" quando atualizar a entidade -->
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="text-light form-label small">Comprimento (cm)</label>
+                                    <input type="number" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="30">
+                                    <!-- Adicione th:field="*{comprimento}" quando atualizar a entidade -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Linha 4: Descrição -->
+                    <div class="mb-3">
+                        <label class="text-light form-label">Descrição Detalhada</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" th:field="*{descricao}" rows="3" placeholder="Descreva os detalhes do produto..."></textarea>
+                    </div>
+
+                    <!-- Linha 5: Status e Botões -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="ativoSwitch" th:field="*{ativo}">
+                            <label class="form-check-label text-light" for="ativoSwitch">Produto Ativo na Loja</label>
+                        </div>
+
+                        <div>
+                            <a th:href="@{/admin/produtos}" class="btn btn-outline-secondary me-2" th:if="${novoProduto.id != null}">Cancelar</a>
+                            <button type="submit" class="btn btn-success px-4"><i class="fas fa-save me-2"></i> Salvar Produto</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Produtos Existentes -->
+        <h3 class="text-white mb-3 pl-2 border-start border-4 border-warning ps-3">Catálogo Atual</h3>
+        <div class="table-responsive shadow rounded">
+            <table class="table table-dark table-hover align-middle mb-0 border-secondary">
+                <thead class="table-secondary text-dark">
+                <tr>
+                    <th style="width: 5%">ID</th>
+                    <th style="width: 10%">Imagem</th>
+                    <th style="width: 30%">Nome</th>
+                    <th style="width: 15%">Preço</th>
+                    <th style="width: 10%">Estoque</th>
+                    <th style="width: 10%">Status</th>
+                    <th style="width: 20%" class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="prod : ${produtos}">
+                    <td class="fw-bold text-muted" th:text="${'#' + prod.id}">1</td>
+                    <td>
+                        <div style="width: 50px; height: 50px; background-color: #333; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <img th:if="${prod.imagemUrl != null && !prod.imagemUrl.isEmpty()}"
+                                 th:src="${prod.imagemUrl}"
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                            <i th:unless="${prod.imagemUrl != null && !prod.imagemUrl.isEmpty()}" class="fas fa-image text-secondary"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <strong class="text-light" th:text="${prod.nome}">Produto</strong>
+                        <div class="small text-muted text-truncate" style="max-width: 200px;" th:text="${prod.descricao}">Desc</div>
+                    </td>
+                    <td class="text-warning fw-bold" th:text="${'R$ ' + #numbers.formatDecimal(prod.preco, 1, 'POINT', 2, 'COMMA')}">R$ 10,00</td>
+                    <td>
+                            <span th:text="${prod.estoque}" class="badge rounded-pill"
+                                  th:classappend="${prod.estoque < 5 ? 'bg-danger' : 'bg-secondary'}">10</span>
+                    </td>
+                    <td>
+                            <span class="badge" th:classappend="${prod.ativo ? 'bg-success' : 'bg-dark border border-secondary text-muted'}"
+                                  th:text="${prod.ativo ? 'Ativo' : 'Inativo'}">Ativo</span>
+                    </td>
+                    <td class="text-end">
+                        <a th:href="@{/admin/produtos/editar/{id}(id=${prod.id})}" class="btn btn-sm btn-outline-info me-1" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a th:href="@{/admin/produtos/excluir/{id}(id=${prod.id})}" class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Tem certeza que deseja excluir este produto?')" title="Excluir">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(produtos)}">
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
+                        Nenhum produto cadastrado.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+</body>
+</html>

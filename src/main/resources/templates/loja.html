@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: common_head('Nossa Loja')}"></head>
+<body>
+<div class="sticky-footer-layout">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container my-5">
+        <h1 class="text-center mb-5" style="color: #D6C178;">Loja Oficial</h1>
+
+        <div class="row">
+            <!-- Loop de Produtos -->
+            <div th:each="produto : ${produtos}" class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark border-secondary">
+                    <!-- Imagem do Produto -->
+                    <img th:src="${produto.imagemUrl != null && !produto.imagemUrl.isEmpty() ? produto.imagemUrl : 'https://via.placeholder.com/300x200?text=Sem+Imagem'}"
+                         class="card-img-top"
+                         alt="Imagem do Produto"
+                         style="height: 200px; object-fit: cover;">
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title text-warning" th:text="${produto.nome}">Nome do Produto</h5>
+                        <p class="card-text text-light" th:text="${produto.descricao}">Descrição breve...</p>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="h4 text-white mb-0" th:text="${'R$ ' + #numbers.formatDecimal(produto.preco, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</span>
+                                <span class="badge badge-success" th:text="${'Estoque: ' + produto.estoque}">Estoque: 10</span>
+                            </div>
+
+                            <!-- Botão de Compra (Simulado por enquanto ou link para checkout) -->
+                            <a th:href="@{/checkout(valor=${produto.preco}, paymentMethod='pix', desc=${produto.nome})}"
+                               class="btn btn-primary btn-block">
+                                <i class="fas fa-shopping-cart"></i> Comprar Agora
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensagem se não houver produtos -->
+            <div th:if="${#lists.isEmpty(produtos)}" class="col-12 text-center text-muted">
+                <p>Nenhum produto disponível no momento.</p>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+</body>
+</html>
