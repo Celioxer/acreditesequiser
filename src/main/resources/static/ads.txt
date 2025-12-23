@@ -1,5 +1,21 @@
-﻿#Soundcast
+﻿#triton_Ozen.fm
+tritondigital.com, 248333, DIRECT, 19b4454d0b87b58b
+
+ownerdomain=acreditesequiserpodcast.com.br
+
+tritondigital.com, 248333, DIRECT, 19b4454d0b87b58b
+rubiconproject.com, 9755, RESELLER, 0bfd66d529a55807
+smartyads.com, 100152, RESELLER, fd2bde0ff2e62c5d
+instreamatic.com, 183, RESELLER
+appnexus.com, 1577, RESELLER, f5ab79cb980f11d1
+targetspot.com, 85, RESELLER
+adswizz.com, 248333, RESELLER
+smartadserver.com, 4831, RESELLER, 060d053dcf45cbf3
+
+
+#Soundcast
 Soundcast.io, 11B6F441, DIRECT
+
 #AdTonos
 adtonos.com, PUB952327291, RESELLER
 tritondigital.com, 38083, RESELLER, 19b4454d0b87b58b
@@ -18,6 +34,7 @@ smartyads.com, 10, RESELLER, fd2bde0ff2e62c5d
 adswizz.com, adtonos, RESELLER
 rubiconproject.com, 25318, RESELLER, 0bfd66d529a55807
 smartyads.com, 100251, RESELLER, fd2bde0ff2e62c5d
+
 #Consumable
 consumable.com, 2001511, DIRECT, aefcd3d2f45b5070
 tritondigital.com, 106423, RESELLER, 19b4454d0b87b58b
@@ -26,7 +43,9 @@ appnexus.com, 7556, RESELLER, f5ab79cb980f11d1
 rubiconproject.com, 24856, RESELLER
 smartadserver.com, 4295, RESELLER
 conversantmedia.com, 100087, RESELLER, 03113cd04947736d
+
 #Equativ
 smartadserver.com, 4856, RESELLER, 060d053dcf45cbf3
+
 #Magnite
 rubiconproject.com, 22494, RESELLER
