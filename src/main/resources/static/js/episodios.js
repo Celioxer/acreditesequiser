@@ -15,29 +15,43 @@ function getPastaPublica(numeroEpisodio) {
 // <<< FUNÇÃO GERADORA SIMPLIFICADA E CORRIGIDA >>>
 function criarEpisodio(dados) {
     const baseURL = 'https://pub-9083d14195514a9f89133574d545efc9.r2.dev/Episódios';
-    const pasta = dados.exclusivo ? '/Exclusivos para assinantes/' : getPastaPublica(dados.numero);
 
-    // A nova regra é: o nome do arquivo é SEMPRE igual ao título.
+    // Regra: Se for somente streaming ou exclusivo, vai para a pasta de assinantes
+    const eExclusivoOuStreaming = dados.exclusivo || dados.somenteStreaming;
+    const pasta = eExclusivoOuStreaming ? '/Exclusivos para assinantes/' : getPastaPublica(dados.numero);
+
     const nomeArquivo = encodeURIComponent(dados.titulo);
 
-    // Lógica Híbrida para a Capa
+    // Lógica da Capa
     const capaURL = dados.capa ? dados.capa : `${baseURL}${pasta}${nomeArquivo}.png`;
 
-    // A URL de download também usa o nome de arquivo completo (que é o título)
-    const downloadURL = `${baseURL}${pasta}${nomeArquivo}.mp3`;
+    // A URL de áudio (streaming) sempre existirá
+    const audioURL = `${baseURL}${pasta}${nomeArquivo}.mp3`;
 
     return {
         numero: dados.numero,
         titulo: dados.titulo,
         descricao: dados.descricao,
         exclusivo: dados.exclusivo,
+        somenteStreaming: dados.somenteStreaming || false, // Define como falso por padrão
         capa: capaURL,
-        download: downloadURL
+        audio: audioURL, // Link para o player
+        // O download só aparece se NÃO for somenteStreaming
+        download: dados.somenteStreaming ? null : audioURL
     };
 }
 
 
 const episodiosBrutos = [
+    // EPISÓDIOS ESPECIAIS (No topo da lista)
+    {
+        numero: 'SP01',
+        titulo: 'ESPECIAL - Relatos de Outono',
+        descricao: 'Episódio especial disponível apenas para streaming via Cloudflare.',
+        capa: 'https://exemplo.com/capa-especial.jpg',
+        exclusivo: true,
+        somenteStreaming: true // <-- Isso desabilita o download
+    },
     // --- episodios ---
 
         {
@@ -419,8 +433,24 @@ const episodiosBrutos = [
                     elementoGrid.innerHTML = '';
                     lista.forEach(ep => {
                         const isExclusivo = ep.exclusivo;
-                        const cardClass = isExclusivo ? 'episodio-card exclusivo' : 'episodio-card';
-                        const badgeHTML = isExclusivo ? '<div class="card-badge">Exclusivo</div>' : '';
+                        // Se for streaming, adicionamos uma classe extra para estilizar se quiser
+                        const cardClass = `episodio-card ${isExclusivo ? 'exclusivo' : ''} ${ep.somenteStreaming ? 'streaming-only' : ''}`;
+
+                        // Badge dinâmico: Prioriza "Streaming" se for o caso
+                        let badgeHTML = '';
+                        if (ep.somenteStreaming) {
+                            badgeHTML = '<div class="card-badge streaming">Somente Streaming</div>';
+                        } else if (isExclusivo) {
+                            badgeHTML = '<div class="card-badge">Exclusivo</div>';
+                        }
+
+                        // Lógica do botão de Download: se for somenteStreaming, o link não aparece
+                        const downloadBtnHTML = ep.somenteStreaming
+                            ? ''
+                            : `<a href="${ep.download}" class="btn-card btn-icon btn-download" download title="Fazer Download">
+                                    <i class="fas fa-download"></i>
+                               </a>`;
+
                         const episodioCard = document.createElement('div');
                         episodioCard.className = cardClass;
                         episodioCard.innerHTML = `
@@ -429,16 +459,14 @@ const episodiosBrutos = [
                                 <img src="${ep.capa}" alt="Capa do Episódio ${ep.numero}" class="card-cover">
                             </div>
                             <div class="card-body">
-                                <span class="ep-number">#${ep.numero}</span>
+                                <span class="ep-number">${ep.somenteStreaming ? 'ESPECIAL' : '#' + ep.numero}</span>
                                 <h3 class="ep-title">${ep.titulo}</h3>
                                 <p class="ep-description">${ep.descricao || 'Descrição não disponível.'}</p>
                                 <div class="card-actions">
-                                    <button class="btn-card btn-play" data-audio-src="${ep.download}">
+                                    <button class="btn-card btn-play" data-audio-src="${ep.audio}">
                                         <i class="fas fa-play"></i> Ouvir
                                     </button>
-                                    <a href="${ep.download}" class="btn-card btn-icon btn-download" download title="Fazer Download">
-                                        <i class="fas fa-download"></i>
-                                    </a>
+                                    ${downloadBtnHTML}
                                 </div>
                                 <div class="card-player-wrapper"></div>
                             </div>
@@ -501,28 +529,57 @@ const episodiosBrutos = [
                 function atualizarPagina() {
                     const tipoSelecionado = document.querySelector('input[name="tipoEpisodio"]:checked').value;
 
+                    // Ajuste da visibilidade das seções
                     secaoExclusivos.style.display = (tipoSelecionado === 'publicos') ? 'none' : 'block';
                     secaoPublicos.style.display = (tipoSelecionado === 'exclusivos') ? 'none' : 'block';
-                    paginacaoContainer.style.display = (tipoSelecionado === 'exclusivos') || episodiosFiltrados.filter(e=>!e.exclusivo).length <= episodiosPorPagina ? 'none' : 'flex';
 
-                    const episodiosExclusivos = episodiosFiltrados.filter(ep => ep.exclusivo);
-                    const episodiosPublicos = episodiosFiltrados.filter(ep => !ep.exclusivo);
+                    // Lógica da paginação (considerando apenas os públicos)
+                    const episodiosPublicosBase = episodiosFiltrados.filter(ep => !ep.exclusivo && !ep.somenteStreaming);
+                    paginacaoContainer.style.display = (tipoSelecionado === 'exclusivos') || episodiosPublicosBase.length <= episodiosPorPagina ? 'none' : 'flex';
+
+                    // 1. SEPARAR EPISÓDIOS
+                    // Exclusivos agora incluem os "Somente Streaming"
+                    let episodiosExclusivos = episodiosFiltrados.filter(ep => ep.exclusivo || ep.somenteStreaming);
+                    let episodiosPublicos = [...episodiosPublicosBase];
+
+                    // 2. ORDENAÇÃO DOS EXCLUSIVOS (Especiais primeiro)
+                    // Primeiro invertemos para manter a ordem cronológica inversa (mais novos primeiro)
                     episodiosExclusivos.reverse();
+
+                    // Depois movemos os "somenteStreaming" para o topo absoluto
+                    episodiosExclusivos.sort((a, b) => {
+                        if (a.somenteStreaming && !b.somenteStreaming) return -1;
+                        if (!a.somenteStreaming && b.somenteStreaming) return 1;
+                        return 0;
+                    });
+
+                    // 3. ORDENAÇÃO DOS PÚBLICOS
                     episodiosPublicos.reverse();
 
+                    // 4. PAGINAÇÃO (Apenas para os públicos)
                     const totalPaginas = Math.ceil(episodiosPublicos.length / episodiosPorPagina);
                     paginaAtual = Math.max(1, Math.min(paginaAtual, totalPaginas || 1));
                     const inicio = (paginaAtual - 1) * episodiosPorPagina;
                     const fim = inicio + episodiosPorPagina;
                     const publicosPaginados = episodiosPublicos.slice(inicio, fim);
 
+                    // 5. RENDERIZAÇÃO
                     renderizarGrid(episodiosExclusivos, gridExclusivos);
                     renderizarGrid(publicosPaginados, gridPublicos);
 
-                    if (contadorEpisodios) contadorEpisodios.textContent = `Mostrando ${episodiosFiltrados.length} de ${todosEpisodios.length} episódios encontrados`;
-                    if (infoPagina) infoPagina.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
-                    if (btnAnterior) btnAnterior.disabled = paginaAtual === 1;
-                    if (btnProximo) btnProximo.disabled = paginaAtual === (totalPaginas || 1);
+                    // 6. ATUALIZAÇÃO DE INTERFACE (CONTADORES)
+                    if (contadorEpisodios) {
+                        contadorEpisodios.textContent = `Mostrando ${episodiosFiltrados.length} de ${todosEpisodios.length} episódios encontrados`;
+                    }
+                    if (infoPagina) {
+                        infoPagina.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+                    }
+                    if (btnAnterior) {
+                        btnAnterior.disabled = paginaAtual === 1;
+                    }
+                    if (btnProximo) {
+                        btnProximo.disabled = paginaAtual === (totalPaginas || 1);
+                    }
                 }
 
                 // -----------------------------------------------------------------------------
