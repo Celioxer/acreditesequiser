@@ -14,7 +14,7 @@ function getPastaPublica(numeroEpisodio) {
 
 // <<< FUNÇÃO GERADORA SIMPLIFICADA E CORRIGIDA >>>
 function criarEpisodio(dados) {
-    const baseURL = 'https://pub-9083d14195514a9f89133574d545efc9.r2.dev/Episódios';
+    const baseURL = 'https://arquivos.acreditesequiserpodcast.com.br/Episódios';
 
     // Regra: Se for somente streaming ou exclusivo, vai para a pasta de assinantes
     const eExclusivoOuStreaming = dados.exclusivo || dados.somenteStreaming;
@@ -46,9 +46,9 @@ const episodiosBrutos = [
     // EPISÓDIOS ESPECIAIS (No topo da lista)
     {
         numero: 'SP01',
-        titulo: 'ESPECIAL - Relatos de Outono',
-        descricao: 'Episódio especial disponível apenas para streaming via Cloudflare.',
-        capa: 'https://exemplo.com/capa-especial.jpg',
+        titulo: 'ESPECIAL - ',
+        descricao: 'Episódio especial disponível apenas para streaming.',
+        capa: '',
         exclusivo: true,
         somenteStreaming: true // <-- Isso desabilita o download
     },
