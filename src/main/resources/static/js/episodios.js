@@ -45,12 +45,12 @@ function criarEpisodio(dados) {
 const episodiosBrutos = [
     // EPISÓDIOS ESPECIAIS (No topo da lista)
     {
-        numero: 'SP01',
-        titulo: 'ESPECIAL - ',
-        descricao: 'Episódio especial disponível apenas para streaming.',
-        capa: '',
+        numero: '13',
+        titulo: '13 - Exclusivo - Dossiê Varginha - Parte 1',
+        descricao: 'EPISÓDIO EXCLUSIVO PARA ASSINANTES Em 2026 o caso varginha completa 30 anos. E nesse tempo todo, foi criada uma narrativa para o caso que é amplamente conhecida e divulgada na mídia. Em uma recente pesquisa sobre o caso, utilizando material de 1996,descobrimos muitas divergencias,e que serão divulgadas nesse dossie de 3 partes. Entao aperte o play e venha conhecer a descontrução do caso varginha!',
+        capa: 'https://arquivos.acreditesequiserpodcast.com.br/Epis%C3%B3dios/Exclusivos%20para%20assinantes/13%20-%20Exclusivo%20-%20Dossi%C3%AA%20Varginha%20-%20Parte%201.jpg',
         exclusivo: true,
-        somenteStreaming: true // <-- Isso desabilita o download
+        somenteStreaming: true
     },
     // --- episodios ---
 
