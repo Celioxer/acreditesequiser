@@ -2,7 +2,7 @@ package com.site.services;
 
 import com.site.models.PaymentHistory;
 import com.site.repositories.PaymentHistoryRepository;
-// import com.site.models.Usuario; // Se precisar importar
+// import com.site.models.Usuario;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,6 @@ public class WebhookService {
         }
 
         try {
-            // Busca detalhes no Mercado Pago
             Map<String, Object> response = mercadoPagoWebClientService.consultarPagamento(paymentId).block();
 
             if (response == null) {
@@ -54,35 +53,36 @@ public class WebhookService {
 
             logger.info("🔎 Processando 'payment' ID: {}. Detalhes: {}", paymentId, response);
 
-            // --- PROTEÇÃO CONTRA NULL POINTER EXCEPTION ---
+            // --- CORREÇÃO DO ERRO (NullPointerException) AQUI ---
+
+            // 1. Verifica se o STATUS existe antes de converter
             Object statusObj = response.get("status");
             if (statusObj == null) {
-                logger.warn("Webhook 'payment' ID: {} recebido sem o campo 'status'. Ignorado.", paymentId);
+                logger.warn("Webhook 'payment' ID: {} ignorado: campo 'status' ausente.", paymentId);
                 return;
             }
             String status = statusObj.toString();
 
+            // 2. Verifica se a EXTERNAL_REFERENCE existe antes de converter
             Object externalRefObj = response.get("external_reference");
             if (externalRefObj == null) {
-                logger.warn("Webhook 'payment' ID: {} sem 'external_reference'. Ignorado.", paymentId);
+                logger.warn("Webhook 'payment' ID: {} ignorado: campo 'external_reference' ausente (provavelmente teste de validação).", paymentId);
                 return;
             }
             String externalRef = externalRefObj.toString();
-            // ----------------------------------------------
 
-            // Tenta converter external_reference para ID de usuário
+            // ----------------------------------------------------
+
             Long usuarioId;
             try {
                 usuarioId = Long.parseLong(externalRef);
             } catch (NumberFormatException e) {
-                // Se for "Recurring payment validation", cai aqui e é ignorado corretamente.
-                logger.warn("Webhook 'payment' com external_reference inválida: '{}'. Ignorando.", externalRef);
+                logger.warn("Webhook 'payment' ignorado: external_reference inválida ('{}').", externalRef);
                 return;
             }
 
             if ("approved".equals(status)) {
 
-                // Extração segura de dados
                 Map<String, Object> paymentMethod = (Map<String, Object>) response.get("payment_method");
                 String paymentMethodId = (paymentMethod != null && paymentMethod.get("id") != null)
                         ? paymentMethod.get("id").toString() : "UNKNOWN";
@@ -101,33 +101,12 @@ public class WebhookService {
                         String dateApprovedStr = response.get("date_approved").toString();
                         dateApproved = OffsetDateTime.parse(dateApprovedStr).toLocalDateTime();
                     } catch (Exception e) {
-                        logger.warn("Erro ao parsear data, usando now()", e);
+                        logger.warn("Erro ao converter data, usando hora atual.");
                     }
                 }
 
-                Integer installments = response.get("installments") != null
-                        ? ((Number) response.get("installments")).intValue()
-                        : 1;
+                Integer installments = response.get("installments") != null ? ((Number) response.get("installments")).intValue() : null;
 
-                // =========================================================
-                // PASSO 2 DO FLUXO DE CARTÃO: CRIAR A ASSINATURA
-                // =========================================================
-                if ("credit_card".equalsIgnoreCase(paymentMethodId) || "credit_card".equalsIgnoreCase((String) response.get("payment_type_id"))) {
-                    logger.info("Pagamento de cartão aprovado. Tentando criar assinatura para usuário {}...", usuarioId);
-
-                    // Se o seu fluxo principal já cria a assinatura no Controller (quando approved),
-                    // aqui nós apenas registramos o pagamento e liberamos o acesso.
-                    // O MP vai cobrar a assinatura mês que vem automaticamente.
-
-                    // IMPORTANTE: Se o pagamento inicial foi criado com sucesso no controller,
-                    // a assinatura JÁ DEVERIA ter sido criada lá (se foi approved imediato).
-                    // Se ficou 'in_process' e aprovou agora, criar a assinatura aqui seria ideal,
-                    // mas precisaria do 'card_token', que o webhook NÃO TRAZ.
-                    // Nesse caso, o usuário terá acesso por 30 dias (pelo pagamento avulso aprovado),
-                    // mas terá que renovar manualmente mês que vem. É um compromisso aceitável.
-                }
-
-                // Salva histórico
                 PaymentHistory ph = new PaymentHistory(
                         paymentId,
                         usuarioId,
@@ -140,7 +119,6 @@ public class WebhookService {
                 );
                 paymentHistoryRepository.save(ph);
 
-                // Libera acesso
                 usuarioService.liberarAssinatura(usuarioId, 30);
                 logger.info("✅ Acesso liberado/renovado para usuário ID: {}", usuarioId);
 
@@ -149,13 +127,13 @@ public class WebhookService {
             }
 
         } catch (Exception e) {
-            logger.error("Erro ao processar notificação de pagamento {}", paymentId, e);
-            // Não lançamos exceção para não travar o webhook do MP em loop infinito de retry
+            logger.error("Erro ao processar notificação de pagamento {}. Transação será revertida.", paymentId, e);
+            throw new RuntimeException("Falha ao processar pagamento " + paymentId, e);
         }
     }
 
     // =====================================================
-    // ✅ PROCESSAR MUDANÇA DE STATUS DA ASSINATURA (preapproval)
+    // ✅ PROCESSAR MUDANÇA DE STATUS DA ASSINATURA (type=preapproval)
     // =====================================================
     @Transactional
     public void processSubscriptionNotification(String preapprovalId) {
@@ -164,19 +142,20 @@ public class WebhookService {
             Map<String, Object> response = mercadoPagoWebClientService.consultarPreapproval(preapprovalId).block();
 
             if (response == null) {
-                logger.error("Resposta nula do Mercado Pago para preapprovalId: {}", preapprovalId);
+                logger.error("Resposta nula do Mercado Pago para o preapprovalId: {}", preapprovalId);
                 return;
             }
 
             logger.info("🔎 Processando 'preapproval' ID: {}. Detalhes: {}", preapprovalId, response);
 
-            // Proteção contra NPE
+            // --- PROTEÇÃO CONTRA NULL AQUI TAMBÉM ---
             Object statusObj = response.get("status");
             if (statusObj == null) return;
             String status = statusObj.toString();
 
             Object externalRefObj = response.get("external_reference");
             if (externalRefObj == null) return;
+            // ----------------------------------------
 
             Long usuarioId;
             try {
@@ -189,17 +168,15 @@ public class WebhookService {
                 case "paused":
                 case "cancelled":
                     usuarioService.removerAssinatura(usuarioId);
-                    logger.info("⚠ Assinatura {} cancelada/pausada. Acesso removido para usuário: {}", preapprovalId, usuarioId);
+                    logger.info("⚠ Assinatura {} cancelada/pausada para usuário ID: {}", preapprovalId, usuarioId);
                     break;
                 case "authorized":
-                    // O acesso geralmente é liberado pelo pagamento (payment), mas podemos reforçar aqui
-                    // usuarioService.liberarAssinatura(usuarioId, 30);
-                    logger.info("Assinatura {} ativa/autorizada.", preapprovalId);
-                    break;
+                default:
+                    logger.info("Assinatura {} com status: {}. Nenhuma ação necessária.", preapprovalId, status);
             }
 
         } catch (Exception e) {
-            logger.error("Erro ao processar notificação de assinatura {}", preapprovalId, e);
+            logger.error("Erro ao processar notificação de assinatura {}.", preapprovalId, e);
         }
     }
 }
