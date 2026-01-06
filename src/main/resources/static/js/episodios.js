@@ -22,18 +22,19 @@ function criarEpisodio(dados) {
 
     const nomeArquivo = encodeURIComponent(dados.titulo);
 
-    // Lógica da Capa
+    // Lógica da Capa: Se tiver capa manual, usa. Senão, gera.
     const capaURL = dados.capa ? dados.capa : `${baseURL}${pasta}${nomeArquivo}.png`;
 
-    // A URL de áudio (streaming) sempre existirá
-    const audioURL = `${baseURL}${pasta}${nomeArquivo}.mp3`;
+    // Lógica do Áudio: Se tiver audio manual, usa. Senão, gera.
+    // ISSO RESOLVE SEU PROBLEMA: Permite corrigir links quebrados manualmente
+    const audioURL = dados.audio ? dados.audio : `${baseURL}${pasta}${nomeArquivo}.mp3`;
 
     return {
         numero: dados.numero,
         titulo: dados.titulo,
         descricao: dados.descricao,
         exclusivo: dados.exclusivo,
-        somenteStreaming: dados.somenteStreaming || false, // Define como falso por padrão
+        somenteStreaming: dados.somenteStreaming || false,
         capa: capaURL,
         audio: audioURL, // Link para o player
         // O download só aparece se NÃO for somenteStreaming
@@ -48,9 +49,21 @@ const episodiosBrutos = [
         numero: '13',
         titulo: '13 - Exclusivo - Dossiê Varginha - Parte 1',
         descricao: 'EPISÓDIO EXCLUSIVO PARA ASSINANTES Em 2026 o caso varginha completa 30 anos. E nesse tempo todo, foi criada uma narrativa para o caso que é amplamente conhecida e divulgada na mídia. Em uma recente pesquisa sobre o caso, utilizando material de 1996,descobrimos muitas divergencias,e que serão divulgadas nesse dossie de 3 partes. Entao aperte o play e venha conhecer a descontrução do caso varginha!',
+        // Capa manual (já estava assim)
         capa: 'https://arquivos.acreditesequiserpodcast.com.br/Epis%C3%B3dios/Exclusivos%20para%20assinantes/13%20-%20Exclusivo%20-%20Dossi%C3%AA%20Varginha%20-%20Parte%201.jpg',
         exclusivo: true,
-        somenteStreaming: true
+        somenteStreaming: true,
+    },
+    {
+        numero: '14',
+        titulo: '14 - Exclusivo - Dossiê Varginha - Parte 2',
+        descricao: 'EPISÓDIO EXCLUSIVO PARA ASSINANTES Nessa segunda parte do dossiê varginha,vamos falar das criaturas e das testemunhas citadas na casuística do caso. Então aperte o play e venha conhecer a desconstrução do caso varginha! RECOMENDAMOS ESCUTAR COM FONES DE OUVIDO. Se você gosta do nosso trabalho, acesse nosso site e participe do nosso grupo exclusivo para assinantes. Acesse o site acreditesequiserpodcast.com.br Assine UFO, a maior, mais conceituada e mais antiga Revista de Ufologia do mundo',
+        // Capa manual
+        capa: 'https://arquivos.acreditesequiserpodcast.com.br/Epis%C3%B3dios/Exclusivos%20para%20assinantes/14%20-%20Exclusivo%20-%20Dossi%C3%AA%20Varginha%20-%20Parte%202.jpg',
+        // AQUI: Se o automático não funciona, coloque o link exato do arquivo de áudio aqui:
+        audio: 'https://arquivos.acreditesequiserpodcast.com.br/Epis%C3%B3dios/Exclusivos%20para%20assinantes/14%20-%20Exclusivo%20-%20%20Dossi%C3%AA%20Varginha%20-%20Parte%202.mp3',
+        exclusivo: true,
+        somenteStreaming: true,
     },
     // --- episodios ---
 
