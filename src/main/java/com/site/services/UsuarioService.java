@@ -33,6 +33,13 @@ public class UsuarioService {
     }
 
     // ==========================================================
+    // ✅ MÉTODO ADICIONADO PARA O WEBHOOK
+    // ==========================================================
+    public Optional<Usuario> findById(Long id) {
+        return usuarioRepository.findById(id);
+    }
+
+    // ==========================================================
     // ✅ USADO PELOS WEBHOOKS DO MERCADO PAGO
     // ==========================================================
 
@@ -62,13 +69,6 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + usuarioId));
 
         usuario.setRole(Usuario.Role.USER);
-
-        // --- CORREÇÃO CRÍTICA ---
-        // Se o acesso deve ser removido IMEDIATAMENTE após o cancelamento.
-        // Se o usuário puder usar o acesso até o fim do período pago,
-        // então este método deve apenas mudar o Role e não tocar na data.
-        // Mas o seu controller SÓ OLHA A DATA.
-        // Vamos forçar a data para expirar "agora".
         usuario.setAcessoValidoAte(LocalDateTime.now().minusMinutes(1)); // Expira o acesso
 
         usuarioRepository.save(usuario);
@@ -80,17 +80,10 @@ public class UsuarioService {
 
     @Transactional
     public long desativarAssinaturasVencidas() {
-        // Encontra usuários que DEVERIAM ser assinantes mas cujo acesso expirou
         List<Usuario> expiram = usuarioRepository
                 .findByRoleAndAcessoValidoAteBefore(Usuario.Role.SUBSCRIBER, LocalDateTime.now());
 
-        expiram.forEach(u -> {
-            u.setRole(Usuario.Role.USER);
-            // Também podemos garantir que a data seja nula ou antiga,
-            // embora o controller já vá bloquear de qualquer forma.
-            // u.setAcessoValidoAte(null); // Opcional, mas limpo
-        });
-
+        expiram.forEach(u -> u.setRole(Usuario.Role.USER));
         usuarioRepository.saveAll(expiram);
 
         return expiram.size();
@@ -126,7 +119,6 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         String token = UUID.randomUUID().toString();
-
         usuario.setPasswordResetToken(token);
         usuario.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(30));
 
@@ -137,7 +129,6 @@ public class UsuarioService {
 
     @Transactional
     public void resetPassword(String token, String newPassword) {
-
         Usuario usuario = usuarioRepository.findByPasswordResetToken(token)
                 .orElseThrow(() -> new RuntimeException("Token inválido."));
 

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>Pagamento com Cartão</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -20,9 +21,9 @@
             width: 100%;
             max-width: 450px;
             padding: 30px;
-            background-color: #ffffff;
+            background-color: #fff;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             text-align: center;
             border: 1px solid #ddd;
         }
@@ -45,15 +46,18 @@
             color: #555;
             font-weight: 500;
         }
+        /* Ajuste para alinhar a altura das divs do MP com os inputs normais */
         .input-mp {
             width: 100%;
             height: 45px;
             border: 1px solid #ddd;
             border-radius: 8px;
             padding: 0 10px;
-            font-size: 1rem;
+            /* Padding reduzido para iframes */
             box-sizing: border-box;
-            background-color: white;
+            background-color: #fff;
+            display: flex;
+            align-items: center; /* Centraliza o iframe verticalmente */
         }
         .input-std {
             width: 100%;
@@ -63,6 +67,7 @@
             padding: 0 10px;
             font-size: 1rem;
             box-sizing: border-box;
+            background-color: #fff;
         }
         select.input-std {
             padding: 0 10px;
@@ -103,164 +108,180 @@
             <label for="form-checkout__cardNumber">Número do Cartão</label>
             <div id="form-checkout__cardNumber" class="input-mp"></div>
         </div>
-        <input type="hidden" name="deviceId" id="deviceId" />
+
         <div class="form-group">
             <label for="form-checkout__expirationDate">Data de Vencimento</label>
             <div id="form-checkout__expirationDate" class="input-mp"></div>
         </div>
+
         <div class="form-group">
             <label for="form-checkout__securityCode">Código de Segurança (CVV)</label>
             <div id="form-checkout__securityCode" class="input-mp"></div>
         </div>
+
         <div class="form-group">
             <label for="form-checkout__installments">Parcelas</label>
             <select id="form-checkout__installments" class="input-std"></select>
         </div>
+
         <div class="form-group">
-            <label for="form-checkout__issuer">Banco emissor</label>
+            <label for="form-checkout__issuer">Banco Emissor</label>
             <select id="form-checkout__issuer" class="input-std"></select>
         </div>
+
         <div class="form-group">
             <label for="form-checkout__cardholderName">Nome do Titular</label>
-            <input type="text" id="form-checkout__cardholderName" class="input-std" />
+            <input type="text" id="form-checkout__cardholderName" class="input-std" placeholder="Como no cartão" />
         </div>
+
         <div class="form-group">
             <label for="form-checkout__cardholderEmail">E-mail</label>
-            <input type="email" id="form-checkout__cardholderEmail" class="input-std" />
+            <input type="email" id="form-checkout__cardholderEmail" class="input-std" placeholder="exemplo@email.com" />
         </div>
+
         <div class="form-group">
             <label for="form-checkout__identificationType">Tipo de documento</label>
             <select id="form-checkout__identificationType" class="input-std"></select>
         </div>
+
         <div class="form-group">
             <label for="form-checkout__identificationNumber">Número do documento</label>
-            <input type="text" id="form-checkout__identificationNumber" class="input-std" />
+            <input type="text" id="form-checkout__identificationNumber" class="input-std" placeholder="Somente números" />
         </div>
+
+        <input type="hidden" name="deviceId" id="deviceId" />
+
         <button type="submit" id="form-checkout__submit">Pagar</button>
     </form>
 </div>
 
 <script src="https://sdk.mercadopago.com/js/v2"></script>
-<script>
-    (function() {
-        var script = document.createElement("script");
-        script.src = "https://www.mercadopago.com/v2/security.js";
-        script.setAttribute("view", "checkout");
-        script.onload = function() {
-            var deviceId = window.MP_DEVICE_SESSION_ID;
-            if (deviceId) {
-                document.getElementById("deviceId").value = deviceId;
-            }
-        };
-        document.body.appendChild(script);
-    })();
-</script>
 <script th:inline="javascript">
-    // Variáveis do Thymeleaf
-    const valorPagamento = [[${valor}]];
-    const descricaoPagamento = [[${descricao}]];
+    document.addEventListener("DOMContentLoaded", function() {
 
-    const publicKey = 'APP_USR-6b43d260-2d40-4a94-807d-80a43ee05a7c';
+        const valorPagamento = [[${valor}]];
+        const descricaoPagamento = [[${descricao}]];
 
-    console.log('Inicializando Mercado Pago com valor:', valorPagamento);
+        // Lembre-se de verificar se esta é a chave correta de PRODUÇÃO
+        const mp = new MercadoPago('APP_USR-6b43d260-2d40-4a94-807d-80a43ee05a7c', { locale: 'pt-BR' });
 
-    const mp = new MercadoPago(publicKey, { locale: 'pt-BR' });
-
-    const cardForm = mp.cardForm({
-        amount: valorPagamento.toString(),
-        iframe: true,
-        form: {
-            id: "form-checkout",
-            cardNumber: { id: "form-checkout__cardNumber", placeholder: "Número do cartão" },
-            expirationDate: { id: "form-checkout__expirationDate", placeholder: "MM/AA" },
-            securityCode: { id: "form-checkout__securityCode", placeholder: "CVV" },
-            installments: { id: "form-checkout__installments", placeholder: "Parcelas" },
-            issuer: { id: "form-checkout__issuer", placeholder: "Banco emissor" },
-            cardholderName: { id: "form-checkout__cardholderName", placeholder: "Nome do Titular" },
-            cardholderEmail: { id: "form-checkout__cardholderEmail", placeholder: "E-mail" },
-            identificationType: { id: "form-checkout__identificationType", placeholder: "Tipo de documento" },
-            identificationNumber: { id: "form-checkout__identificationNumber", placeholder: "Número do documento" },
-        },
-
-        callbacks: {
-
-            onFormMounted: error => {
-                if (error) return console.warn("Falha ao montar o formulário:", error);
-                console.log("Formulário montado com sucesso.");
+        const cardForm = mp.cardForm({
+            amount: valorPagamento.toString(),
+            iframe: true,
+            form: {
+                id: "form-checkout",
+                cardNumber: {
+                    id: "form-checkout__cardNumber",
+                    placeholder: "0000 0000 0000 0000",
+                    style: { fontSize: "16px", color: "#333" }
+                },
+                expirationDate: {
+                    id: "form-checkout__expirationDate",
+                    placeholder: "MM/AA",
+                    style: { fontSize: "16px", color: "#333" }
+                },
+                securityCode: {
+                    id: "form-checkout__securityCode",
+                    placeholder: "123",
+                    style: { fontSize: "16px", color: "#333" }
+                },
+                installments: { id: "form-checkout__installments" },
+                issuer: { id: "form-checkout__issuer" },
+                cardholderName: { id: "form-checkout__cardholderName" },
+                cardholderEmail: { id: "form-checkout__cardholderEmail" },
+                identificationType: { id: "form-checkout__identificationType" },
+                identificationNumber: { id: "form-checkout__identificationNumber" }
             },
+            callbacks: {
+                onFormMounted: error => {
+                    if (error) return console.warn("Falha ao montar o formulário:", error);
+                    console.log("Formulário montado com sucesso.");
 
-            onSubmit: event => {
-                event.preventDefault();
-
-                const submitButton = document.getElementById('form-checkout__submit');
-                submitButton.disabled = true;
-                document.getElementById('form-checkout').classList.add('loading');
-
-                const data = cardForm.getCardFormData();
-
-                const payload = {
-                    token: data.token,
-                    paymentMethodId: data.paymentMethodId,
-                    issuerId: Number(data.issuerId),
-                    installments: Number(data.installments),
-                    valor: Number(valorPagamento),
-                    descricao: descricaoPagamento,
-
-                    deviceId: document.getElementById("deviceId").value,
-
-                    cardholder: {
-                        name: document.getElementById("form-checkout__cardholderName").value,
-                        identification: {
-                            type: data.identificationType,
-                            number: data.identificationNumber
+                    var script = document.createElement("script");
+                    script.src = "https://www.mercadopago.com/v2/security.js";
+                    script.onload = function() {
+                        var deviceInput = document.getElementById("deviceId");
+                        if(deviceInput) {
+                             deviceInput.value = window.MP_DEVICE_SESSION_ID || '';
                         }
-                    },
+                    };
+                    document.body.appendChild(script);
+                },
+                onSubmit: event => {
+                    event.preventDefault();
+                    const submitButton = document.getElementById('form-checkout__submit');
+                    submitButton.disabled = true;
+                    document.getElementById('form-checkout').classList.add('loading');
 
-                    payer: {
-                        email: document.getElementById('form-checkout__cardholderEmail').value,
-                        identification: {
-                            type: data.identificationType,
-                            number: data.identificationNumber
+                    const data = cardForm.getCardFormData();
+
+                    const payload = {
+                        token: data.token,
+                        paymentMethodId: data.paymentMethodId,
+                        issuerId: Number(data.issuerId),
+                        installments: Number(data.installments),
+                        valor: Number(valorPagamento),
+                        descricao: descricaoPagamento,
+                        deviceId: document.getElementById("deviceId").value, // Alterado para camelCase
+                        cardholder: {
+                            name: data.cardholderName,
+                            identification: {
+                                type: data.identificationType,
+                                number: data.identificationNumber
+                            }
+                        },
+                        payer: {
+                            email: data.cardholderEmail,
+                            identification: {
+                                type: data.identificationType,
+                                number: data.identificationNumber
+                            }
                         }
-                    }
-                };
+                    };
 
-                fetch("/process-card-payment", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                })
-                .then(response => {
-                    if (!response.ok)
-                        return response.json().then(err => { throw err; });
+                    fetch("/process-card-payment", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Resposta do servidor:", data);
+                        if (data.status === 'authorized' || data.status === 'approved') {
+                             window.location.href = '/pagamento-sucesso';
+                        } else if (data.status === 'in_process' || data.status === 'pending') {
+                             window.location.href = '/payment-pending';
+                        } else {
+                             // Tratamento de erros comuns
+                             let msg = "Não foi possível processar o pagamento.";
+                             if (data.message) msg = data.message;
+                             if (data.error) msg = data.error;
 
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("Resposta da assinatura:", data);
+                             if (msg.includes("cc_rejected_high_risk")) {
+                                 msg = "Pagamento recusado por segurança. Tente outro cartão.";
+                             } else if (msg.includes("bad_filled_security_code")) {
+                                 msg = "Código de segurança incorreto.";
+                             }
 
-                    if (data.status === 'authorized') {
-                        window.location.href = '/pagamento-sucesso';
-                    } else {
-                        window.location.href = '/payment-pending';
-                    }
-                })
-                .catch(error => {
-                    console.error("Erro ao processar pagamento:", error);
-
-                    alert("Erro no pagamento: " + (error.message || JSON.stringify(error)));
-
-                    submitButton.disabled = false;
-                    document.getElementById('form-checkout').classList.remove('loading');
-                });
-            },
-
-            onError: (errors) => {
-                console.error("Erros de validação:", errors);
-                const errorMessages = errors.map(error => error.message).join('\n');
-                alert("Corrija os seguintes erros:\n" + errorMessages);
+                             alert("Atenção: " + msg);
+                             submitButton.disabled = false;
+                             document.getElementById('form-checkout').classList.remove('loading');
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erro na requisição:", error);
+                        alert("Ocorreu um erro de conexão. Tente novamente.");
+                        submitButton.disabled = false;
+                        document.getElementById('form-checkout').classList.remove('loading');
+                    });
+                },
+                onError: errors => {
+                    console.error("Erros de validação:", errors);
+                    const msg = errors.map(e => e.message).join('\n');
+                    alert("Verifique os dados:\n" + msg);
+                }
             }
-        }
+        });
     });
 </script>
 

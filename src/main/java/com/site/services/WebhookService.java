@@ -1,12 +1,13 @@
 package com.site.services;
 
 import com.site.models.PaymentHistory;
+import com.site.models.Usuario;
 import com.site.repositories.PaymentHistoryRepository;
-// import com.site.models.Usuario;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -53,25 +54,16 @@ public class WebhookService {
 
             logger.info("🔎 Processando 'payment' ID: {}. Detalhes: {}", paymentId, response);
 
-            // --- CORREÇÃO DO ERRO (NullPointerException) AQUI ---
-
-            // 1. Verifica se o STATUS existe antes de converter
+            // ===== Proteção contra null =====
             Object statusObj = response.get("status");
-            if (statusObj == null) {
-                logger.warn("Webhook 'payment' ID: {} ignorado: campo 'status' ausente.", paymentId);
-                return;
-            }
-            String status = statusObj.toString();
-
-            // 2. Verifica se a EXTERNAL_REFERENCE existe antes de converter
             Object externalRefObj = response.get("external_reference");
-            if (externalRefObj == null) {
-                logger.warn("Webhook 'payment' ID: {} ignorado: campo 'external_reference' ausente (provavelmente teste de validação).", paymentId);
+            if (statusObj == null || externalRefObj == null) {
+                logger.warn("Webhook 'payment' ID: {} ignorado: status ou external_reference ausente.", paymentId);
                 return;
             }
-            String externalRef = externalRefObj.toString();
 
-            // ----------------------------------------------------
+            String status = statusObj.toString();
+            String externalRef = externalRefObj.toString();
 
             Long usuarioId;
             try {
@@ -105,8 +97,11 @@ public class WebhookService {
                     }
                 }
 
-                Integer installments = response.get("installments") != null ? ((Number) response.get("installments")).intValue() : null;
+                Integer installments = response.get("installments") != null
+                        ? ((Number) response.get("installments")).intValue()
+                        : null;
 
+                // Salva histórico de pagamento
                 PaymentHistory ph = new PaymentHistory(
                         paymentId,
                         usuarioId,
@@ -119,7 +114,25 @@ public class WebhookService {
                 );
                 paymentHistoryRepository.save(ph);
 
+                // 🔹 Libera assinatura do usuário
                 usuarioService.liberarAssinatura(usuarioId, 30);
+
+                // 🔹 Cria assinatura recorrente (preapproval) apenas após pagamento aprovado
+                Usuario usuario = usuarioService.findById(usuarioId).orElse(null);
+                if (usuario != null) {
+                    try {
+                        mercadoPagoWebClientService.criarAssinatura(
+                                usuario,
+                                paymentId, // token do pagamento aprovado
+                                "Assinatura Mensal",
+                                amount
+                        ).block();
+                        logger.info("✅ Assinatura recorrente criada para usuário ID: {}", usuarioId);
+                    } catch (Exception e) {
+                        logger.error("Falha ao criar assinatura recorrente para usuário {}.", usuarioId, e);
+                    }
+                }
+
                 logger.info("✅ Acesso liberado/renovado para usuário ID: {}", usuarioId);
 
             } else {
@@ -148,15 +161,11 @@ public class WebhookService {
 
             logger.info("🔎 Processando 'preapproval' ID: {}. Detalhes: {}", preapprovalId, response);
 
-            // --- PROTEÇÃO CONTRA NULL AQUI TAMBÉM ---
             Object statusObj = response.get("status");
-            if (statusObj == null) return;
-            String status = statusObj.toString();
-
             Object externalRefObj = response.get("external_reference");
-            if (externalRefObj == null) return;
-            // ----------------------------------------
+            if (statusObj == null || externalRefObj == null) return;
 
+            String status = statusObj.toString();
             Long usuarioId;
             try {
                 usuarioId = Long.parseLong(externalRefObj.toString());
@@ -171,6 +180,8 @@ public class WebhookService {
                     logger.info("⚠ Assinatura {} cancelada/pausada para usuário ID: {}", preapprovalId, usuarioId);
                     break;
                 case "authorized":
+                    logger.info("Assinatura {} autorizada para usuário ID: {}. Nenhuma ação adicional necessária.", preapprovalId, usuarioId);
+                    break;
                 default:
                     logger.info("Assinatura {} com status: {}. Nenhuma ação necessária.", preapprovalId, status);
             }
