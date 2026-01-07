@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-<head th:replace="~{fragments/head :: common_head('Bem-vindo, Assinante!')}"></head>
+<head th:replace="~{fragments/head :: common_head('Bem-vindo, Apoiador!')}"></head>
 
 <body>
 <div class="sticky-footer-layout">
@@ -71,16 +71,30 @@
 
             <hr class="welcome-divider">
 
-            <div class="welcome-cta">
+            <!-- BLOCO DE SEGURANÇA: WHATSAPP -->
+            <!-- Só exibe se o usuário for SUBSCRIBER E a data de validade for MAIOR que agora -->
+            <div class="welcome-cta"
+                 th:if="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null and usuario.acessoValidoAte.isAfter(#temporals.createNow())}">
                 <h2><i class="fab fa-whatsapp"></i> Acesso ao Grupo Secreto</h2>
                 <p>Conecte-se com outros apoiadores, discuta teorias e receba novidades em primeira mão no nosso grupo exclusivo para membros.</p>
                 <a href="https://chat.whatsapp.com/JnF3abEIx336wmD4M9s7Jy" target="_blank" class="btn btn-whatsapp">Entrar no Grupo</a>
             </div>
 
-            <div class="welcome-cta">
+            <!-- BLOCO DE SEGURANÇA: EPISÓDIOS -->
+            <!-- Mesma regra de segurança -->
+            <div class="welcome-cta"
+                 th:if="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null and usuario.acessoValidoAte.isAfter(#temporals.createNow())}">
                 <h2><i class="fas fa-play-circle"></i> Explore os Arquivos</h2>
                 <p>Todo o nosso acervo de episódios, incluindo o conteúdo exclusivo para assinantes, está liberado para você. Comece sua maratona agora mesmo.</p>
                 <a th:href="@{/episodios}" class="btn btn-episodios">Acessar Episódios</a>
+            </div>
+
+            <!-- Mensagem para quem NÃO tem acesso ativo -->
+            <div class="alert alert-warning text-center"
+                 th:unless="${usuario.role.name() == 'SUBSCRIBER' and usuario.acessoValidoAte != null and usuario.acessoValidoAte.isAfter(#temporals.createNow())}">
+                <h4>🔒 Conteúdo Bloqueado</h4>
+                <p>Para acessar o Grupo VIP e os Episódios Exclusivos, sua assinatura precisa estar ativa.</p>
+                <p>Se você já pagou, aguarde a confirmação ou renove sua assinatura acima.</p>
             </div>
 
         </div>
