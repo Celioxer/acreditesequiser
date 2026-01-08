@@ -60,10 +60,10 @@
                         statusMsg.className = "status-approved";
 
                         // --- AQUI ESTÁ O DELAY ---
-                        // Espera 5000 milissegundos (5 segundos) antes de redirecionar
+                        // Espera 35000 milissegundos (5 segundos) antes de redirecionar
                         setTimeout(() => {
                             window.location.href = '/pagamento-sucesso';
-                        }, 5000);
+                        }, 15000);
                     } else {
                         // Se não, continua "Aguardando pagamento..."
                         statusMsg.textContent = "Aguardando pagamento...";
@@ -73,7 +73,7 @@
                     // Se o polling falhar, não faz nada, só loga
                     console.error("Erro no polling:", err);
                 });
-        }, 3000); // Pergunta a cada 3 segundos
+        }, 7000); // Pergunta a cada 7 segundos
     }
 
     // --- FUNÇÃO 1: O INÍCIO (BUSCAR O QR CODE) ---
