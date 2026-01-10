@@ -65,6 +65,17 @@ const episodiosBrutos = [
         exclusivo: true,
         somenteStreaming: true,
     },
+    {
+        numero: '15',
+                titulo: '15 - Exclusivo - Dossiê Varginha - Parte 3',
+                descricao: 'EPISÓDIO EXCLUSIVO PARA ASSINANTES Na terceira parte do dossiê varginha,vamos comentar sobre o caso do policial Marco Eli Chereze, que teve sua morte supostamente atribuida ao contato com o misterioso ser e também a tão alegada participação militar no caso varginha.Então aperte o play e venha conhecer a Fanfic que se transformou no caso varginha! RECOMENDAMOS ESCUTAR COM FONES DE OUVIDO.',
+                // Capa manual
+                capa: 'https://arquivos.acreditesequiserpodcast.com.br/Epis%C3%B3dios/Exclusivos%20para%20assinantes/15%20-%20Exclusivo%20-%20%20Dossi%C3%AA%20Varginha%20-%20Parte%203.jpeg',
+                // AQUI: Se o automático não funciona, coloque o link exato do arquivo de áudio aqui:
+                audio: 'https://arquivos.acreditesequiserpodcast.com.br/Epis%C3%B3dios/Exclusivos%20para%20assinantes/15%20-%20Exclusivo%20-%20%20Dossi%C3%AA%20Varginha%20-%20Parte%203.mp3',
+                exclusivo: true,
+                somenteStreaming: true,
+    },
     // --- episodios ---
 
         {
